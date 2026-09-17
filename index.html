@@ -161,12 +161,14 @@
     border-radius:8px; padding:10px 11px; font-size:14.5px; font-family:inherit; width:100%;
   }
   .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-  .radio-row{display:flex; flex-direction:column; gap:8px}
+  .radio-row{display:flex; flex-direction:row; gap:8px}
   .radio-row label{
-    display:flex; align-items:center; justify-content:flex-start; gap:8px;
-    border:1px solid var(--border); border-radius:8px; padding:9px 12px; font-size:12.5px; cursor:pointer;
+    display:flex; flex:1; align-items:center; justify-content:center; gap:8px;
+    border:1px solid var(--border); background:var(--surface); color:var(--ink-muted);
+    border-radius:8px; padding:9px 12px; font-size:12.5px; cursor:pointer;
   }
-  .radio-row input{accent-color:var(--brand)}
+  .radio-row label:has(input:checked){border-color:var(--brand); color:var(--ink); background:var(--surface-alt)}
+  .radio-row input{display:none}
 
   #scanArea{
     position:relative; border-radius:12px; overflow:hidden; background:#000; aspect-ratio:4/3;
@@ -320,10 +322,12 @@
 
       <div class="field" style="margin-top:10px">
         <label>Type dato</label>
+
         <div class="radio-row">
-          <label><input type="radio" name="expiryType" value="best_for" checked> Best før</label>
-          <label><input type="radio" name="expiryType" value="siste_forbruksdag"> Siste forbruksdag</label>
+          <label><input type="radio" name="expiryType" value="best_for" checked>Best før</label>
+          <label><input type="radio" name="expiryType" value="siste_forbruksdag">Siste forbruksdag</label>
         </div>
+          
       </div>
 
       <div class="field" style="margin-top:10px">
