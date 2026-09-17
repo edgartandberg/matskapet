@@ -1,0 +1,717 @@
+<title>Matskapet</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+  :root{
+    --bg:#F1ECE0; --surface:#FFFDF8; --surface-alt:#E8E0CC;
+    --ink:#24281E; --ink-muted:#5C6350; --border:rgba(36,40,30,.14);
+    --brand:#2F5D48; --brand-ink:#F3F7EF;
+    --climate:#C1652B; --climate-soft:#F3DFCB;
+    --good:#3E7D53; --good-soft:#DCEEE0;
+    --warn:#966A1E; --warn-soft:#F5E7C7;
+    --danger:#B23A2E; --danger-soft:#F6DAD5;
+    --shadow: 0 1px 2px rgba(36,40,30,.06), 0 4px 14px rgba(36,40,30,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14170F; --surface:#1C2016; --surface-alt:#262B1D;
+      --ink:#ECE9DD; --ink-muted:#A7AC99; --border:rgba(236,233,221,.14);
+      --brand:#8AC7A9; --brand-ink:#0F130D;
+      --climate:#E39B6B; --climate-soft:#3A2A1C;
+      --good:#8ECC9C; --good-soft:#1E3323;
+      --warn:#E5B85B; --warn-soft:#3A2E14;
+      --danger:#E58C7F; --danger-soft:#3C1E1A;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14170F; --surface:#1C2016; --surface-alt:#262B1D;
+    --ink:#ECE9DD; --ink-muted:#A7AC99; --border:rgba(236,233,221,.14);
+    --brand:#8AC7A9; --brand-ink:#0F130D;
+    --climate:#E39B6B; --climate-soft:#3A2A1C;
+    --good:#8ECC9C; --good-soft:#1E3323;
+    --warn:#E5B85B; --warn-soft:#3A2E14;
+    --danger:#E58C7F; --danger-soft:#3C1E1A;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.3);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Work Sans",system-ui,sans-serif;
+    padding-left:16px; padding-right:16px;
+    padding-block:24px;
+    display:flex; justify-content:center;
+  }
+  h1,h2,h3{font-family:"Fraunces",Georgia,serif; margin:0; text-wrap:balance}
+  .num{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+  button{font-family:inherit}
+
+  #shell{
+    width:100%; max-width:430px; display:flex; flex-direction:column; gap:18px;
+  }
+
+  /* header */
+  header{
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:20;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background:var(--bg); padding-block:4px 2px;
+  }
+  .brand{display:flex; align-items:center; gap:10px}
+  .brand .mark{
+    width:38px; height:38px; border-radius:11px; background:var(--brand); color:var(--brand-ink);
+    display:flex; align-items:center; justify-content:center; font-size:19px; flex-shrink:0;
+    box-shadow:var(--shadow);
+  }
+  .brand h1{font-size:21px; font-weight:600; letter-spacing:-.01em}
+  .brand p{margin:0; font-size:11.5px; color:var(--ink-muted)}
+  #addBtn{
+    background:var(--brand); color:var(--brand-ink); border:none; border-radius:999px;
+    width:42px; height:42px; font-size:22px; line-height:1; cursor:pointer;
+    box-shadow:var(--shadow); flex-shrink:0;
+  }
+  #addBtn:active{transform:scale(.94)}
+
+  /* stat tiles */
+  .stats{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .tile{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:12px 13px; display:flex; flex-direction:column; gap:2px;
+  }
+  .tile .lbl{font-size:11px; color:var(--ink-muted); font-weight:500}
+  .tile .val{font-size:22px; font-weight:600}
+  .tile.climate-save .val{color:var(--good)}
+  .tile.climate-waste .val{color:var(--danger)}
+
+  /* list */
+  .section-lbl{
+    font-size:12px; font-weight:600; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.05em;
+    padding-left:2px;
+  }
+  .list{display:flex; flex-direction:column; gap:10px}
+  .item{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:12px; display:flex; gap:11px; align-items:flex-start; box-shadow:var(--shadow);
+    border-left:4px solid var(--u-color, var(--border));
+  }
+  .item .thumb{
+    width:44px; height:44px; border-radius:10px; background:var(--surface-alt); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:19px; overflow:hidden;
+  }
+  .item .thumb img{width:100%; height:100%; object-fit:cover}
+  .item .body{flex:1; min-width:0; display:flex; flex-direction:column; gap:4px}
+  .item .name{font-weight:600; font-size:14.5px; overflow-wrap:anywhere}
+  .item .meta{display:flex; flex-wrap:wrap; gap:6px; align-items:center}
+  .chip{
+    font-size:11.5px; font-weight:600; padding:3px 8px; border-radius:999px;
+    background:var(--u-soft,var(--surface-alt)); color:var(--u-color,var(--ink-muted));
+  }
+  .chip.climate{background:var(--climate-soft); color:var(--climate)}
+  .item .actions{display:flex; gap:6px; margin-top:2px}
+  .item .actions button{
+    border:1px solid var(--border); background:var(--surface); color:var(--ink);
+    border-radius:9px; padding:5px 9px; font-size:12px; font-weight:600; cursor:pointer;
+  }
+  .item .actions button.primary{background:var(--good-soft); color:var(--good); border-color:transparent}
+  .item .actions button.waste{background:var(--danger-soft); color:var(--danger); border-color:transparent}
+  .item .actions button:active{transform:scale(.96)}
+
+  .empty{
+    background:var(--surface); border:1px dashed var(--border); border-radius:16px;
+    padding:34px 18px; text-align:center; display:flex; flex-direction:column; gap:6px; align-items:center;
+  }
+  .empty .ic{font-size:30px}
+  .empty h2{font-size:16px}
+  .empty p{margin:0; font-size:13px; color:var(--ink-muted); max-width:26em}
+
+  .footnote{font-size:11px; color:var(--ink-muted); text-align:center; line-height:1.5; padding:4px 6px 0}
+
+  /* sheet */
+  #overlay{
+    position:fixed; inset:0; background:rgba(20,20,14,.45); z-index:40;
+    display:flex; align-items:flex-end; justify-content:center;
+  }
+  #overlay[hidden]{display:none}
+  #sheet{
+    width:100%; max-width:430px; max-height:88vh; overflow-y:auto;
+    background:var(--bg); border-radius:20px 20px 0 0; padding:18px 18px calc(20px + env(safe-area-inset-bottom,0px));
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .sheet-head{display:flex; align-items:center; justify-content:space-between}
+  .sheet-head h2{font-size:18px}
+  #closeSheet{background:none; border:none; font-size:20px; color:var(--ink-muted); cursor:pointer; padding:4px}
+
+  .tabs{display:flex; gap:6px; background:var(--surface-alt); padding:4px; border-radius:11px}
+  .tabs button{
+    flex:1; border:none; background:transparent; padding:8px; border-radius:8px;
+    font-size:13px; font-weight:600; color:var(--ink-muted); cursor:pointer;
+  }
+  .tabs button.on{background:var(--surface); color:var(--ink); box-shadow:var(--shadow)}
+
+  .field{display:flex; flex-direction:column; gap:5px}
+  .field label{font-size:12px; font-weight:600; color:var(--ink-muted)}
+  .field input, .field select{
+    border:1px solid var(--border); background:var(--surface); color:var(--ink);
+    border-radius:10px; padding:10px 11px; font-size:14.5px; font-family:inherit; width:100%;
+  }
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .radio-row{display:flex; gap:8px}
+  .radio-row label{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
+    border:1px solid var(--border); border-radius:10px; padding:9px; font-size:12.5px; cursor:pointer;
+  }
+  .radio-row input{accent-color:var(--brand)}
+
+  #scanArea{
+    position:relative; border-radius:14px; overflow:hidden; background:#000; aspect-ratio:4/3;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #scanArea video{width:100%; height:100%; object-fit:cover}
+  #scanFrame{
+    position:absolute; inset:18%; border:2.5px solid rgba(255,255,255,.85); border-radius:10px;
+    box-shadow:0 0 0 1000px rgba(0,0,0,.25);
+  }
+  .scan-msg{color:#fff; font-size:13px; text-align:center; padding:0 20px}
+  #scanStatus{font-size:12.5px; color:var(--ink-muted); text-align:center}
+
+  .lookup-result{
+    display:flex; gap:10px; align-items:center; background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:10px;
+  }
+  .lookup-result .thumb{width:40px; height:40px; border-radius:9px; background:var(--surface-alt); overflow:hidden; flex-shrink:0; display:flex;align-items:center;justify-content:center;font-size:17px}
+  .lookup-result .thumb img{width:100%;height:100%;object-fit:cover}
+  .lookup-result strong{font-size:13.5px}
+
+  .btn-primary{
+    background:var(--brand); color:var(--brand-ink); border:none; border-radius:11px;
+    padding:12px; font-size:14.5px; font-weight:600; cursor:pointer;
+  }
+  .btn-primary:disabled{opacity:.5}
+  .btn-secondary{
+    background:var(--surface); border:1px solid var(--border); color:var(--ink);
+    border-radius:11px; padding:11px; font-size:13.5px; font-weight:600; cursor:pointer;
+  }
+  .hint{font-size:11.5px; color:var(--ink-muted)}
+
+  #toast{
+    position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%);
+    background:var(--ink); color:var(--bg); padding:10px 16px; border-radius:999px; font-size:13px;
+    z-index:60; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow);
+  }
+  #toast[hidden]{display:none}
+  #toast button{background:none;border:none;color:var(--climate);font-weight:700;font-size:13px;cursor:pointer}
+
+  @media (prefers-reduced-motion:no-preference){
+    .item, .tile{transition:transform .15s ease}
+  }
+</style>
+
+<div id="shell">
+  <header>
+    <div class="brand">
+      <div class="mark">🥫</div>
+      <div>
+        <h1>Matskapet</h1>
+        <p>Skann · registrer · reduser svinn</p>
+      </div>
+    </div>
+    <button id="addBtn" aria-label="Legg til vare">+</button>
+  </header>
+
+  <section class="stats" aria-label="Oversikt">
+    <div class="tile">
+      <span class="lbl">I skapet</span>
+      <span class="val num" id="statTotal">0</span>
+    </div>
+    <div class="tile">
+      <span class="lbl">Går ut snart</span>
+      <span class="val num" id="statSoon">0</span>
+    </div>
+    <div class="tile climate-save">
+      <span class="lbl">CO₂ spart</span>
+      <span class="val num" id="statSaved">0,0 kg</span>
+    </div>
+    <div class="tile climate-waste">
+      <span class="lbl">CO₂ kastet</span>
+      <span class="val num" id="statWasted">0,0 kg</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-lbl" id="listLabel">Ditt matskap</div>
+    <div class="list" id="list" style="margin-top:8px"></div>
+    <div class="empty" id="emptyState" hidden>
+      <div class="ic">🥕</div>
+      <h2>Tomt så langt</h2>
+      <p>Trykk på + og legg til den første varen — skann strekkoden eller skriv den inn manuelt.</p>
+    </div>
+  </section>
+
+  <p class="footnote">Klimatall er grove, internasjonale anslag — ikke norsktilpassede tall ennå. <span id="storageNote">Data lagres privat for deg.</span></p>
+</div>
+
+<div id="overlay" hidden>
+  <div id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">Legg til vare</h2>
+      <button id="closeSheet" aria-label="Lukk">✕</button>
+    </div>
+
+    <div class="tabs">
+      <button id="tabScanBtn" class="on">Skann strekkode</button>
+      <button id="tabManualBtn">Skriv inn manuelt</button>
+    </div>
+
+    <div id="panelScan">
+      <div id="scanArea">
+        <video id="scanVideo" playsinline muted hidden></video>
+        <div id="scanFrame" hidden></div>
+        <div class="scan-msg" id="scanMsg">Trykk «Start kamera» for å skanne en strekkode.</div>
+      </div>
+      <div id="scanStatus" style="margin-top:8px"></div>
+      <button class="btn-secondary" id="scanToggleBtn" style="margin-top:10px; width:100%">Start kamera</button>
+    </div>
+
+    <div id="panelManual" hidden>
+      <div class="field">
+        <label for="barcodeInput">Strekkode (valgfritt)</label>
+        <div style="display:flex; gap:8px">
+          <input id="barcodeInput" inputmode="numeric" placeholder="f.eks. 7038010009457">
+          <button class="btn-secondary" id="lookupBtn" style="white-space:nowrap">Slå opp</button>
+        </div>
+        <span class="hint" id="lookupHint"></span>
+      </div>
+    </div>
+
+    <div id="lookupResultWrap" hidden>
+      <div class="lookup-result">
+        <div class="thumb" id="resultThumb">🛒</div>
+        <div>
+          <div class="hint">Funnet i Open Food Facts</div>
+          <strong id="resultName"></strong>
+        </div>
+      </div>
+    </div>
+
+    <form id="itemForm">
+      <div class="field">
+        <label for="nameInput">Varenavn</label>
+        <input id="nameInput" required placeholder="f.eks. Kyllingfilet">
+      </div>
+
+      <div class="row2" style="margin-top:10px">
+        <div class="field">
+          <label for="categorySelect">Kategori (for klimaanslag)</label>
+          <select id="categorySelect"></select>
+        </div>
+        <div class="field">
+          <label for="qtyInput">Mengde (kg)</label>
+          <input id="qtyInput" type="number" step="0.05" min="0.05">
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:10px">
+        <label>Type dato</label>
+        <div class="radio-row">
+          <label><input type="radio" name="expiryType" value="best_for" checked> Best før</label>
+          <label><input type="radio" name="expiryType" value="siste_forbruksdag"> Siste forbruksdag</label>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:10px">
+        <label for="dateInput">Dato</label>
+        <input id="dateInput" type="date" required>
+      </div>
+
+      <button class="btn-primary" type="submit" style="margin-top:14px; width:100%">Legg i matskapet</button>
+    </form>
+  </div>
+</div>
+
+<div id="toast" hidden>
+  <span id="toastMsg"></span>
+  <button id="toastUndo">Angre</button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- climate reference data (illustrative, international) ----------
+  var CATS = [
+    {id:'rodt_kjott', label:'Rødt kjøtt (biff, lam)', co2:40, kg:0.5, off:['beef','mutton','lamb','red-meat'], icon:'🥩'},
+    {id:'svin', label:'Svin', co2:12, kg:0.5, off:['pork','ham'], icon:'🥓'},
+    {id:'fjorfe', label:'Fjørfe (kylling, kalkun)', co2:9, kg:0.5, off:['poultr','chicken','turkey'], icon:'🍗'},
+    {id:'fisk', label:'Fisk og sjømat', co2:6, kg:0.4, off:['fish','seafood','shrimp','salmon'], icon:'🐟'},
+    {id:'ost', label:'Ost', co2:21, kg:0.25, off:['cheese'], icon:'🧀'},
+    {id:'meieri', label:'Melk og meieri', co2:3, kg:1, off:['milk','dairies','yogurt','cream'], icon:'🥛'},
+    {id:'egg', label:'Egg', co2:4.5, kg:0.6, off:['egg'], icon:'🥚'},
+    {id:'brod', label:'Brød og korn', co2:1.4, kg:0.5, off:['bread','cereal','pasta','rice','flour'], icon:'🍞'},
+    {id:'gronnsaker', label:'Grønnsaker', co2:0.5, kg:0.5, off:['vegetable'], icon:'🥦'},
+    {id:'frukt', label:'Frukt', co2:0.6, kg:0.5, off:['fruit'], icon:'🍎'},
+    {id:'plante', label:'Plantebasert protein (bønner, tofu)', co2:2.5, kg:0.4, off:['legume','tofu','plant-based','bean'], icon:'🫘'},
+    {id:'annet', label:'Annet / ukjent', co2:2.5, kg:0.4, off:[], icon:'🛒'}
+  ];
+  function catById(id){ return CATS.find(function(c){return c.id===id}) || CATS[CATS.length-1]; }
+  function guessCategory(offCategoriesTags){
+    if(!offCategoriesTags || !offCategoriesTags.length) return 'annet';
+    var joined = offCategoriesTags.join(' ').toLowerCase();
+    for(var i=0;i<CATS.length;i++){
+      var c = CATS[i];
+      for(var j=0;j<c.off.length;j++){
+        if(joined.indexOf(c.off[j]) !== -1) return c.id;
+      }
+    }
+    return 'annet';
+  }
+
+  var catSelect = document.getElementById('categorySelect');
+  CATS.forEach(function(c){
+    var o = document.createElement('option');
+    o.value = c.id; o.textContent = c.icon + ' ' + c.label;
+    catSelect.appendChild(o);
+  });
+  catSelect.addEventListener('change', function(){
+    document.getElementById('qtyInput').value = catById(catSelect.value).kg;
+  });
+
+  // ---------- storage: db+user capability, falling back to localStorage ----------
+  var storage = null;
+
+  function makeLocalBackend(){
+    var KEY = 'matskapet_items_v1';
+    function read(){
+      try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e){ return []; }
+    }
+    function write(items){
+      try { localStorage.setItem(KEY, JSON.stringify(items)); } catch(e){}
+    }
+    var listeners = [];
+    function notify(){ var items = read(); listeners.forEach(function(fn){ fn(items); }); }
+    return {
+      subscribe: function(fn){ listeners.push(fn); notify(); return function(){ listeners = listeners.filter(function(f){return f!==fn}); }; },
+      add: function(item){ var items = read(); item.id = 'l' + Date.now() + Math.random().toString(36).slice(2); items.push(item); write(items); notify(); },
+      update: function(id, patch){ var items = read(); var it = items.find(function(x){return x.id===id}); if(it) Object.assign(it, patch); write(items); notify(); },
+      remove: function(id){ write(read().filter(function(x){return x.id!==id})); notify(); },
+      mode: 'local'
+    };
+  }
+
+  function makeDbBackend(db, uid){
+    var itemsCol = db.doc('data/users/' + uid + '/profile').collection('items');
+    return {
+      subscribe: function(fn){
+        return itemsCol.orderBy('expiryDate','asc').onSnapshot(function(snap){
+          fn(snap.docs.map(function(d){ var data = d.data() || {}; data.id = d.id; return data; }));
+        }, function(err){ console.warn('db onSnapshot error', err); });
+      },
+      add: function(item){ itemsCol.add(item).catch(function(e){ console.warn('add failed', e); }); },
+      update: function(id, patch){ itemsCol.doc(id).update(patch).catch(function(e){ console.warn('update failed', e); }); },
+      remove: function(id){ itemsCol.doc(id).delete().catch(function(e){ console.warn('delete failed', e); }); },
+      mode: 'db'
+    };
+  }
+
+  function initStorage(cb){
+    var settled = false;
+    function settle(s){ if(settled) return; settled = true; storage = s; cb(s); }
+    // never block first paint: fall back if capabilities don't answer promptly
+    var fallbackTimer = setTimeout(function(){ settle(makeLocalBackend()); }, 4000);
+    (async function(){
+      try{
+        if(!window.claude || !window.claude.use){ clearTimeout(fallbackTimer); settle(makeLocalBackend()); return; }
+        var db = await window.claude.use('db');
+        var userCap = db ? await window.claude.use('user') : null;
+        var uid = userCap ? await userCap.id() : null;
+        clearTimeout(fallbackTimer);
+        if(db && uid){ settle(makeDbBackend(db, uid)); }
+        else{ settle(makeLocalBackend()); }
+      } catch(e){
+        clearTimeout(fallbackTimer);
+        settle(makeLocalBackend());
+      }
+    })();
+  }
+
+  // ---------- rendering ----------
+  var listEl = document.getElementById('list');
+  var emptyEl = document.getElementById('emptyState');
+  var storageNote = document.getElementById('storageNote');
+
+  function daysLeft(dateStr){
+    var today = new Date(); today.setHours(0,0,0,0);
+    var d = new Date(dateStr + 'T00:00:00');
+    return Math.round((d - today) / 86400000);
+  }
+
+  function urgency(item){
+    var dl = daysLeft(item.expiryDate);
+    if(item.expiryType === 'siste_forbruksdag'){
+      if(dl < 0) return {level:'danger', text:'Siste forbruksdag passert', dl:dl};
+      if(dl <= 2) return {level:'warn', text: dl===0 ? 'Siste dag i dag' : dl + ' dager igjen', dl:dl};
+      return {level:'good', text: dl + ' dager igjen', dl:dl};
+    }
+    if(dl < -3) return {level:'warn', text:'Best før passert — sjekk selv', dl:dl};
+    if(dl < 0) return {level:'good', text:'Best før passert, trolig fint', dl:dl};
+    if(dl <= 2) return {level:'warn', text: dl===0 ? 'Best før i dag' : dl + ' dager til best før', dl:dl};
+    return {level:'good', text: dl + ' dager til best før', dl:dl};
+  }
+
+  var LEVEL_VARS = {
+    good:{color:'var(--good)', soft:'var(--good-soft)'},
+    warn:{color:'var(--warn)', soft:'var(--warn-soft)'},
+    danger:{color:'var(--danger)', soft:'var(--danger-soft)'}
+  };
+
+  function fmtKg(n){ return n.toLocaleString('nb-NO', {minimumFractionDigits:1, maximumFractionDigits:1}) + ' kg'; }
+
+  var currentItems = [];
+
+  function render(items){
+    currentItems = items;
+    var active = items.filter(function(i){ return i.status === 'active'; });
+    active.sort(function(a,b){ return daysLeft(a.expiryDate) - daysLeft(b.expiryDate); });
+
+    document.getElementById('statTotal').textContent = active.length;
+    document.getElementById('statSoon').textContent = active.filter(function(i){ return daysLeft(i.expiryDate) <= 2; }).length;
+
+    var saved = items.filter(function(i){ return i.status === 'brukt'; })
+      .reduce(function(s,i){ return s + (catById(i.categoryId).co2 * (i.quantityKg || catById(i.categoryId).kg)); }, 0);
+    var wasted = items.filter(function(i){ return i.status === 'kastet'; })
+      .reduce(function(s,i){ return s + (catById(i.categoryId).co2 * (i.quantityKg || catById(i.categoryId).kg)); }, 0);
+    document.getElementById('statSaved').textContent = fmtKg(saved);
+    document.getElementById('statWasted').textContent = fmtKg(wasted);
+
+    listEl.innerHTML = '';
+    if(active.length === 0){ emptyEl.hidden = false; } else { emptyEl.hidden = true; }
+
+    active.forEach(function(item){
+      var cat = catById(item.categoryId);
+      var u = urgency(item);
+      var v = LEVEL_VARS[u.level];
+      var co2 = cat.co2 * (item.quantityKg || cat.kg);
+
+      var el = document.createElement('div');
+      el.className = 'item';
+      el.style.setProperty('--u-color', v.color);
+      el.style.setProperty('--u-soft', v.soft);
+
+      var thumbHtml = item.imageUrl
+        ? '<img src="' + item.imageUrl + '" alt="">'
+        : cat.icon;
+
+      el.innerHTML =
+        '<div class="thumb">' + thumbHtml + '</div>' +
+        '<div class="body">' +
+          '<div class="name"></div>' +
+          '<div class="meta">' +
+            '<span class="chip">' + u.text + '</span>' +
+            '<span class="chip climate">~' + co2.toFixed(1).replace('.', ',') + ' kg CO₂e</span>' +
+          '</div>' +
+          '<div class="actions">' +
+            '<button class="primary" data-act="brukt">Brukt opp ✓</button>' +
+            '<button class="waste" data-act="kastet">Kastet</button>' +
+            '<button data-act="slett">Slett</button>' +
+          '</div>' +
+        '</div>';
+      el.querySelector('.name').textContent = item.name;
+      el.querySelectorAll('[data-act]').forEach(function(btn){
+        btn.addEventListener('click', function(){ handleAction(item, btn.getAttribute('data-act')); });
+      });
+      listEl.appendChild(el);
+    });
+  }
+
+  var toastTimer = null;
+  function showToast(msg, undoFn){
+    var t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    var undoBtn = document.getElementById('toastUndo');
+    undoBtn.onclick = function(){ if(undoFn) undoFn(); t.hidden = true; clearTimeout(toastTimer); };
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.hidden = true; }, 5000);
+  }
+
+  function handleAction(item, act){
+    if(act === 'slett'){
+      storage.remove(item.id);
+      return;
+    }
+    var newStatus = act; // 'brukt' | 'kastet'
+    storage.update(item.id, {status:newStatus});
+    showToast(act === 'brukt' ? 'Markert som brukt opp' : 'Markert som kastet', function(){
+      storage.update(item.id, {status:'active'});
+    });
+  }
+
+  // ---------- add-item sheet ----------
+  var overlay = document.getElementById('overlay');
+  var addBtn = document.getElementById('addBtn');
+  var closeSheet = document.getElementById('closeSheet');
+  var tabScanBtn = document.getElementById('tabScanBtn');
+  var tabManualBtn = document.getElementById('tabManualBtn');
+  var panelScan = document.getElementById('panelScan');
+  var panelManual = document.getElementById('panelManual');
+  var itemForm = document.getElementById('itemForm');
+  var lookupResultWrap = document.getElementById('lookupResultWrap');
+  var lookedUpProduct = null;
+
+  function openSheet(){
+    overlay.hidden = false;
+    document.getElementById('dateInput').valueAsDate = new Date();
+    document.getElementById('qtyInput').value = catById(catSelect.value).kg;
+  }
+  function closeSheetFn(){
+    overlay.hidden = true;
+    stopScanning();
+    itemForm.reset();
+    lookupResultWrap.hidden = true;
+    lookedUpProduct = null;
+    document.getElementById('lookupHint').textContent = '';
+  }
+  addBtn.addEventListener('click', openSheet);
+  closeSheet.addEventListener('click', closeSheetFn);
+  overlay.addEventListener('click', function(e){ if(e.target === overlay) closeSheetFn(); });
+
+  function setTab(which){
+    var scanning = which === 'scan';
+    tabScanBtn.classList.toggle('on', scanning);
+    tabManualBtn.classList.toggle('on', !scanning);
+    panelScan.hidden = !scanning;
+    panelManual.hidden = scanning;
+    if(!scanning) stopScanning();
+  }
+  tabScanBtn.addEventListener('click', function(){ setTab('scan'); });
+  tabManualBtn.addEventListener('click', function(){ setTab('manual'); });
+
+  // ---------- barcode scanning (native BarcodeDetector, graceful fallback) ----------
+  var scanVideo = document.getElementById('scanVideo');
+  var scanFrame = document.getElementById('scanFrame');
+  var scanMsg = document.getElementById('scanMsg');
+  var scanStatus = document.getElementById('scanStatus');
+  var scanToggleBtn = document.getElementById('scanToggleBtn');
+  var mediaStream = null;
+  var scanLoopId = null;
+  var supportsScan = 'BarcodeDetector' in window;
+
+  if(!supportsScan){
+    scanMsg.textContent = 'Kameraskanning støttes ikke i denne nettleseren/forhåndsvisningen ennå. Bruk «Skriv inn manuelt».';
+    scanToggleBtn.hidden = true;
+  }
+
+  function stopScanning(){
+    if(scanLoopId) cancelAnimationFrame(scanLoopId);
+    scanLoopId = null;
+    if(mediaStream){ mediaStream.getTracks().forEach(function(t){ t.stop(); }); mediaStream = null; }
+    scanVideo.hidden = true; scanFrame.hidden = true;
+    scanMsg.hidden = false;
+    scanToggleBtn.textContent = 'Start kamera';
+  }
+
+  async function startScanning(){
+    scanStatus.textContent = '';
+    try{
+      mediaStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    } catch(e){
+      scanStatus.textContent = 'Fikk ikke tilgang til kamera. Bruk manuell inntasting i stedet.';
+      return;
+    }
+    scanVideo.srcObject = mediaStream;
+    await scanVideo.play();
+    scanVideo.hidden = false; scanFrame.hidden = false; scanMsg.hidden = true;
+    scanToggleBtn.textContent = 'Stopp kamera';
+
+    var detector = new window.BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']});
+    var lastTry = 0;
+    function loop(ts){
+      if(!mediaStream) return;
+      if(!lastTry || ts - lastTry > 350){
+        lastTry = ts;
+        detector.detect(scanVideo).then(function(codes){
+          if(codes && codes.length){
+            var code = codes[0].rawValue;
+            stopScanning();
+            document.getElementById('barcodeInput').value = code;
+            setTab('manual');
+            lookupBarcode(code);
+          }
+        }).catch(function(){ /* keep trying */ });
+      }
+      scanLoopId = requestAnimationFrame(loop);
+    }
+    scanLoopId = requestAnimationFrame(loop);
+  }
+
+  scanToggleBtn.addEventListener('click', function(){
+    if(mediaStream) stopScanning(); else startScanning();
+  });
+
+  // ---------- Open Food Facts lookup ----------
+  var lookupBtn = document.getElementById('lookupBtn');
+  var lookupHint = document.getElementById('lookupHint');
+
+  function lookupBarcode(code){
+    if(!code) return;
+    lookupHint.textContent = 'Slår opp …';
+    fetch('https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(code) + '.json')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(data && data.status === 1 && data.product){
+          var p = data.product;
+          lookedUpProduct = {
+            name: p.product_name || p.product_name_no || ('Vare ' + code),
+            imageUrl: p.image_small_url || p.image_url || null,
+            categoriesTags: p.categories_tags || []
+          };
+          document.getElementById('nameInput').value = lookedUpProduct.name;
+          var guessed = guessCategory(lookedUpProduct.categoriesTags);
+          catSelect.value = guessed;
+          document.getElementById('qtyInput').value = catById(guessed).kg;
+          document.getElementById('resultName').textContent = lookedUpProduct.name;
+          var thumb = document.getElementById('resultThumb');
+          thumb.innerHTML = lookedUpProduct.imageUrl ? '<img src="' + lookedUpProduct.imageUrl + '" alt="">' : '🛒';
+          lookupResultWrap.hidden = false;
+          lookupHint.textContent = '';
+        } else {
+          lookedUpProduct = null;
+          lookupHint.textContent = 'Fant ikke varen i Open Food Facts — skriv inn navn og kategori selv.';
+        }
+      })
+      .catch(function(){
+        lookupHint.textContent = 'Kunne ikke slå opp akkurat nå — skriv inn varen manuelt.';
+      });
+  }
+  lookupBtn.addEventListener('click', function(){ lookupBarcode(document.getElementById('barcodeInput').value.trim()); });
+
+  // ---------- submit ----------
+  itemForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var expiryType = itemForm.querySelector('input[name="expiryType"]:checked').value;
+    var item = {
+      name: document.getElementById('nameInput').value.trim(),
+      categoryId: catSelect.value,
+      quantityKg: parseFloat(document.getElementById('qtyInput').value) || catById(catSelect.value).kg,
+      expiryType: expiryType,
+      expiryDate: document.getElementById('dateInput').value,
+      imageUrl: lookedUpProduct ? lookedUpProduct.imageUrl : null,
+      barcode: document.getElementById('barcodeInput').value.trim() || null,
+      status: 'active',
+      addedAt: new Date().toISOString()
+    };
+    if(!item.name || !item.expiryDate) return;
+    storage.add(item);
+    closeSheetFn();
+  });
+
+  // ---------- boot ----------
+  initStorage(function(s){
+    if(s.mode === 'local'){
+      storageNote.textContent = 'Data lagres kun i denne nettleseren på denne enheten (prototype-lagring).';
+    } else {
+      storageNote.textContent = 'Data lagres privat for deg og følger deg mellom økter.';
+    }
+    s.subscribe(render);
+  });
+})();
+</script>
