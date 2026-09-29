@@ -364,7 +364,12 @@
 
     <div id="receiptCaptureArea">
       <input id="receiptFileInput" type="file" accept="image/*" capture="environment" hidden>
-      <button class="btn-secondary" id="receiptPickBtn" style="width:100%">Ta bilde av kvittering</button>
+      <input id="receiptUploadInput" type="file" accept="image/*" hidden>
+      <div style="display:flex; gap:8px">
+        <button class="btn-secondary" id="receiptPickBtn" style="flex:1">Ta bilde</button>
+        <button class="btn-secondary" id="receiptUploadBtn" style="flex:1">Last opp bilde</button>
+      </div>
+      <span class="hint" style="display:block; margin-top:6px">Du kan også lime inn et kvitteringsbilde (Ctrl+V / Cmd+V).</span>
       <div id="receiptPreviewWrap" hidden>
         <img id="receiptPreview" alt="Kvitteringsbilde" style="max-width:100%">
       </div>
@@ -395,6 +400,8 @@
     <div class="empty" id="shoppingEmptyState" hidden>
       <p>Handlelisten er tom. Fotografer en oppskrift, eller legg til en vare manuelt under.</p>
     </div>
+    <p class="hint" id="shoppingConfirmHint">Huk av varene du har kjøpt, og bekreft for å legge dem i matskapet.</p>
+    <button class="btn-primary" id="shoppingConfirmBtn" style="width:100%" disabled>Legg avhukede varer i matskapet</button>
 
     <form id="shoppingAddForm" style="display:flex; gap:8px; margin-top:10px">
       <input id="shoppingAddInput" placeholder="Legg til vare manuelt" style="flex:1">
@@ -404,7 +411,12 @@
     <div class="section-lbl" style="margin-top:16px">Fotografer oppskrift</div>
     <p class="hint">Ta bilde av ingredienslisten i en oppskrift (bok, blad eller skjermbilde). Ingredienser du trolig allerede har i matskapet er forhåndsavhuket bort — bildet lagres ikke, og du går alltid gjennom listen før noe legges til.</p>
     <input id="recipeFileInput" type="file" accept="image/*" capture="environment" hidden>
-    <button class="btn-secondary" id="recipePickBtn" style="width:100%">Ta bilde av oppskrift</button>
+    <input id="recipeUploadInput" type="file" accept="image/*" hidden>
+    <div style="display:flex; gap:8px">
+      <button class="btn-secondary" id="recipePickBtn" style="flex:1">Ta bilde</button>
+      <button class="btn-secondary" id="recipeUploadBtn" style="flex:1">Last opp bilde</button>
+    </div>
+    <span class="hint" style="display:block; margin-top:6px">Du kan også lime inn et oppskriftsbilde (Ctrl+V / Cmd+V).</span>
     <div id="recipePreviewWrap" hidden>
       <img id="recipePreview" alt="Oppskriftsbilde" style="max-width:100%">
     </div>
@@ -671,11 +683,13 @@
   var currentShoppingItems = [];
   var shoppingItemsEl = document.getElementById('shoppingItems');
   var shoppingEmptyState = document.getElementById('shoppingEmptyState');
+  var shoppingConfirmBtn = document.getElementById('shoppingConfirmBtn');
 
   function renderShoppingList(items){
     currentShoppingItems = items;
     shoppingItemsEl.innerHTML = '';
     shoppingEmptyState.hidden = items.length > 0;
+    shoppingConfirmBtn.disabled = !items.some(function(i){ return i.checked; });
 
     // ikke-kjøpte varer øverst, kjøpte varer nederst (rekkefølge ellers som lagt til)
     var sorted = items.slice().sort(function(a,b){ return (a.checked?1:0) - (b.checked?1:0); });
@@ -885,7 +899,9 @@
   var receiptBtn = document.getElementById('receiptBtn');
   var closeReceiptSheet = document.getElementById('closeReceiptSheet');
   var receiptFileInput = document.getElementById('receiptFileInput');
+  var receiptUploadInput = document.getElementById('receiptUploadInput');
   var receiptPickBtn = document.getElementById('receiptPickBtn');
+  var receiptUploadBtn = document.getElementById('receiptUploadBtn');
   var receiptPreviewWrap = document.getElementById('receiptPreviewWrap');
   var receiptPreview = document.getElementById('receiptPreview');
   var receiptOcrStatus = document.getElementById('receiptOcrStatus');
@@ -981,15 +997,18 @@
     receiptReviewArea.hidden = true;
     receiptOcrStatus.textContent = '';
     receiptFileInput.value = '';
+    receiptUploadInput.value = '';
     receiptRows = [];
   }
   receiptBtn.addEventListener('click', openReceiptSheet);
   closeReceiptSheet.addEventListener('click', closeReceiptSheetFn);
   receiptOverlay.addEventListener('click', function(e){ if(e.target === receiptOverlay) closeReceiptSheetFn(); });
   receiptPickBtn.addEventListener('click', function(){ receiptFileInput.click(); });
+  receiptUploadBtn.addEventListener('click', function(){ receiptUploadInput.click(); });
 
-  receiptFileInput.addEventListener('change', function(){
-    var file = receiptFileInput.files && receiptFileInput.files[0];
+  // Delt av kamera-, opplastings- og lim inn-veiene under — alle ender opp med en
+  // File/Blob av kvitteringsbildet, som leses lokalt av Tesseract.js (se F2-notatet over).
+  function handleReceiptFile(file){
     if(!file) return;
     if(!window.Tesseract){
       receiptOcrStatus.textContent = 'Kunne ikke laste tekstgjenkjenning (sjekk nettforbindelsen). Legg til varene manuelt i stedet.';
@@ -1020,6 +1039,13 @@
       URL.revokeObjectURL(objectUrl);
       receiptOcrStatus.textContent = 'Kunne ikke lese bildet. Prøv igjen, eller legg til varene manuelt.';
     });
+  }
+
+  receiptFileInput.addEventListener('change', function(){
+    handleReceiptFile(receiptFileInput.files && receiptFileInput.files[0]);
+  });
+  receiptUploadInput.addEventListener('change', function(){
+    handleReceiptFile(receiptUploadInput.files && receiptUploadInput.files[0]);
   });
 
   receiptSubmitBtn.addEventListener('click', function(){
@@ -1055,7 +1081,9 @@
   var shoppingAddForm = document.getElementById('shoppingAddForm');
   var shoppingAddInput = document.getElementById('shoppingAddInput');
   var recipeFileInput = document.getElementById('recipeFileInput');
+  var recipeUploadInput = document.getElementById('recipeUploadInput');
   var recipePickBtn = document.getElementById('recipePickBtn');
+  var recipeUploadBtn = document.getElementById('recipeUploadBtn');
   var recipePreviewWrap = document.getElementById('recipePreviewWrap');
   var recipePreview = document.getElementById('recipePreview');
   var recipeOcrStatus = document.getElementById('recipeOcrStatus');
@@ -1158,6 +1186,7 @@
     recipeReviewArea.hidden = true;
     recipeOcrStatus.textContent = '';
     recipeFileInput.value = '';
+    recipeUploadInput.value = '';
     recipeRows = [];
   }
 
@@ -1170,6 +1199,7 @@
   closeShoppingSheet.addEventListener('click', closeShoppingSheetFn);
   shoppingOverlay.addEventListener('click', function(e){ if(e.target === shoppingOverlay) closeShoppingSheetFn(); });
   recipePickBtn.addEventListener('click', function(){ recipeFileInput.click(); });
+  recipeUploadBtn.addEventListener('click', function(){ recipeUploadInput.click(); });
 
   shoppingAddForm.addEventListener('submit', function(e){
     e.preventDefault();
@@ -1179,8 +1209,39 @@
     shoppingAddInput.value = '';
   });
 
-  recipeFileInput.addEventListener('change', function(){
-    var file = recipeFileInput.files && recipeFileInput.files[0];
+  // Bekreft avhukede handlelistevarer -> flytt dem inn i matskapet. Kategori og
+  // holdbarhet er gjettet ut fra navnet (samme ordliste som kvitteringstolkingen),
+  // med dagens dato som utgangspunkt siden handlelisten ikke kjenner kjøpsdato.
+  shoppingConfirmBtn.addEventListener('click', function(){
+    var toAdd = currentShoppingItems.filter(function(i){ return i.checked; });
+    if(!toAdd.length) return;
+    var today = new Date();
+    var added = 0;
+    toAdd.forEach(function(item){
+      var cat = catById(guessCategoryFromReceiptText(item.name));
+      var expiry = new Date(today.getTime());
+      expiry.setDate(expiry.getDate() + cat.shelfDays);
+      storage.add({
+        name: item.name.trim(),
+        categoryId: cat.id,
+        quantityKg: cat.kg,
+        expiryType: 'best_for',
+        expiryDate: toDateStr(expiry),
+        imageUrl: null,
+        barcode: null,
+        source: 'handleliste',
+        status: 'active',
+        addedAt: new Date().toISOString()
+      });
+      shoppingStorage.remove(item.id);
+      added++;
+    });
+    showToast(added + (added === 1 ? ' vare lagt til i matskapet' : ' varer lagt til i matskapet'));
+  });
+
+  // Delt av kamera-, opplastings- og lim inn-veiene under, se tilsvarende note ved
+  // handleReceiptFile.
+  function handleRecipeFile(file){
     if(!file) return;
     if(!window.Tesseract){
       recipeOcrStatus.textContent = 'Kunne ikke laste tekstgjenkjenning (sjekk nettforbindelsen). Legg til ingrediensene manuelt i stedet.';
@@ -1214,6 +1275,13 @@
       URL.revokeObjectURL(objectUrl);
       recipeOcrStatus.textContent = 'Kunne ikke lese bildet. Prøv igjen, eller legg til ingrediensene manuelt.';
     });
+  }
+
+  recipeFileInput.addEventListener('change', function(){
+    handleRecipeFile(recipeFileInput.files && recipeFileInput.files[0]);
+  });
+  recipeUploadInput.addEventListener('change', function(){
+    handleRecipeFile(recipeUploadInput.files && recipeUploadInput.files[0]);
   });
 
   recipeSubmitBtn.addEventListener('click', function(){
@@ -1231,6 +1299,28 @@
     });
     resetRecipeCapture();
     if(added > 0) showToast(added + (added === 1 ? ' ingrediens lagt til i handlelisten' : ' ingredienser lagt til i handlelisten'));
+  });
+
+  // Lim inn et kvitterings- eller oppskriftsbilde direkte (Ctrl+V/Cmd+V) i stedet for
+  // å ta bilde eller laste opp en fil. Rører ikke vanlig tekstliming — griper kun inn
+  // når utklippstavlen faktisk inneholder et bilde, og bare når riktig ark er åpent.
+  document.addEventListener('paste', function(e){
+    if(!e.clipboardData || !e.clipboardData.items) return;
+    var imageItem = null;
+    for(var i=0;i<e.clipboardData.items.length;i++){
+      if(e.clipboardData.items[i].type && e.clipboardData.items[i].type.indexOf('image/') === 0){
+        imageItem = e.clipboardData.items[i];
+        break;
+      }
+    }
+    if(!imageItem) return;
+    if(!receiptOverlay.hidden){
+      e.preventDefault();
+      handleReceiptFile(imageItem.getAsFile());
+    } else if(!shoppingOverlay.hidden){
+      e.preventDefault();
+      handleRecipeFile(imageItem.getAsFile());
+    }
   });
 
   // ---------- lim inn oppskriftstekst (fallback for video-lenker) ----------
