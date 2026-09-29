@@ -19,6 +19,9 @@
         <p>Skann · registrer · reduser svinn</p>
       </div>
     </div>
+    <button id="receiptBtn" aria-label="Skann kvittering">🧾</button>
+    <button id="shoppingBtn" aria-label="Handleliste">📋</button>
+    <button id="recipeBankBtn" aria-label="Oppskrifter">🍳</button>
     <button id="addBtn" aria-label="Legg til vare">+</button>
   </header>
 
@@ -134,29 +137,113 @@
   </div>
 </div>
 
+<div id="receiptOverlay" hidden>
+  <div id="receiptSheet" role="dialog" aria-modal="true" aria-labelledby="receiptSheetTitle">
+    <div class="sheet-head">
+      <h2 id="receiptSheetTitle">Skann kvittering</h2>
+      <button id="closeReceiptSheet" aria-label="Lukk">✕</button>
+    </div>
+
+    <p class="hint">Kvitteringstekst er ofte butikkforkortelser — gjenkjenningen bommer iblant. Bildet lagres ikke; det leses kun i nettleseren din for å finne varelinjer. Se gjennom listen under og fjern eller rett det som ikke stemmer før du legger varene i matskapet.</p>
+
+    <div id="receiptCaptureArea">
+      <input id="receiptFileInput" type="file" accept="image/*" capture="environment" hidden>
+      <button class="btn-secondary" id="receiptPickBtn" style="width:100%">Ta bilde av kvittering</button>
+      <div id="receiptPreviewWrap" hidden>
+        <img id="receiptPreview" alt="Kvitteringsbilde" style="max-width:100%">
+      </div>
+      <div id="receiptOcrStatus" style="margin-top:8px"></div>
+    </div>
+
+    <div id="receiptReviewArea" hidden>
+      <div class="field" style="margin-top:10px">
+        <label for="receiptPurchaseDate">Kjøpsdato (brukes til å anslå holdbarhet)</label>
+        <input id="receiptPurchaseDate" type="date">
+      </div>
+      <div class="section-lbl" style="margin-top:12px">Fant disse varelinjene</div>
+      <div id="receiptLines"></div>
+      <div id="receiptEmptyHint" class="hint" hidden>Fant ingen tydelige varelinjer. Prøv et skarpere bilde, eller legg til varene manuelt.</div>
+      <button class="btn-primary" id="receiptSubmitBtn" style="margin-top:14px; width:100%">Legg til valgte varer</button>
+    </div>
+  </div>
+</div>
+
+<div id="shoppingOverlay" hidden>
+  <div id="shoppingSheet" role="dialog" aria-modal="true" aria-labelledby="shoppingSheetTitle">
+    <div class="sheet-head">
+      <h2 id="shoppingSheetTitle">Handleliste</h2>
+      <button id="closeShoppingSheet" aria-label="Lukk">✕</button>
+    </div>
+
+    <div id="shoppingItems"></div>
+    <div class="empty" id="shoppingEmptyState" hidden>
+      <p>Handlelisten er tom. Fotografer en oppskrift, eller legg til en vare manuelt under.</p>
+    </div>
+
+    <form id="shoppingAddForm" style="display:flex; gap:8px; margin-top:10px">
+      <input id="shoppingAddInput" placeholder="Legg til vare manuelt" style="flex:1">
+      <button class="btn-secondary" type="submit">Legg til</button>
+    </form>
+
+    <div class="section-lbl" style="margin-top:16px">Fotografer oppskrift</div>
+    <p class="hint">Ta bilde av ingredienslisten i en oppskrift (bok, blad eller skjermbilde). Ingredienser du trolig allerede har i matskapet er forhåndsavhuket bort — bildet lagres ikke, og du går alltid gjennom listen før noe legges til.</p>
+    <input id="recipeFileInput" type="file" accept="image/*" capture="environment" hidden>
+    <button class="btn-secondary" id="recipePickBtn" style="width:100%">Ta bilde av oppskrift</button>
+    <div id="recipePreviewWrap" hidden>
+      <img id="recipePreview" alt="Oppskriftsbilde" style="max-width:100%">
+    </div>
+    <div id="recipeOcrStatus" style="margin-top:8px"></div>
+
+    <div id="recipeReviewArea" hidden>
+      <div class="section-lbl" style="margin-top:12px">Fant disse ingrediensene</div>
+      <div id="recipeLines"></div>
+      <div id="recipeEmptyHint" class="hint" hidden>Fant ingen tydelige ingredienslinjer. Prøv et skarpere bilde av selve ingredienslisten.</div>
+      <button class="btn-primary" id="recipeSubmitBtn" style="margin-top:14px; width:100%">Legg til i handlelisten</button>
+    </div>
+  </div>
+</div>
+
+<div id="recipeBankOverlay" hidden>
+  <div id="recipeBankSheet" role="dialog" aria-modal="true" aria-labelledby="recipeBankSheetTitle">
+    <div class="sheet-head">
+      <h2 id="recipeBankSheetTitle">Oppskrifter</h2>
+      <button id="closeRecipeBankSheet" aria-label="Lukk">✕</button>
+    </div>
+    <p class="hint">Et lite, kuratert utvalg oppskrifter — hak av det du vil lage denne uken, så samler vi ingrediensene i én handleliste (kryssjekket mot det du allerede har i matskapet).</p>
+    <div id="recipeBankList"></div>
+    <button class="btn-primary" id="recipeBankUseBtn" style="margin-top:14px; width:100%">Legg ingredienser i handlelisten</button>
+  </div>
+</div>
+
 <div id="toast" hidden>
   <span id="toastMsg"></span>
   <button id="toastUndo">Angre</button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script>
 (function(){
   "use strict";
 
   // ---------- climate reference data (illustrative, international) ----------
+  // shelfDays: grovt standard holdbarhetsanslag i dager fra kjøpsdato, brukt til å
+  // foreslå en utløpsdato for varer lest fra kvittering (F2) — bruker justerer selv.
+  // receiptWords: norske ord/forkortelser som ofte dukker opp på kvitteringslinjer,
+  // brukt til å gjette kategori for kvitterings-OCR (egen liste fra "off", som er
+  // Open Food Facts sine engelske kategori-tags).
   var CATS = [
-    {id:'rodt_kjott', label:'Rødt kjøtt (biff, lam)', co2:40, kg:0.5, off:['beef','mutton','lamb','red-meat'], icon:'🥩'},
-    {id:'svin', label:'Svin', co2:12, kg:0.5, off:['pork','ham'], icon:'🥓'},
-    {id:'fjorfe', label:'Fjørfe (kylling, kalkun)', co2:9, kg:0.5, off:['poultr','chicken','turkey'], icon:'🍗'},
-    {id:'fisk', label:'Fisk og sjømat', co2:6, kg:0.4, off:['fish','seafood','shrimp','salmon'], icon:'🐟'},
-    {id:'ost', label:'Ost', co2:21, kg:0.25, off:['cheese'], icon:'🧀'},
-    {id:'meieri', label:'Melk og meieri', co2:3, kg:1, off:['milk','dairies','yogurt','cream'], icon:'🥛'},
-    {id:'egg', label:'Egg', co2:4.5, kg:0.6, off:['egg'], icon:'🥚'},
-    {id:'brod', label:'Brød og korn', co2:1.4, kg:0.5, off:['bread','cereal','pasta','rice','flour'], icon:'🍞'},
-    {id:'gronnsaker', label:'Grønnsaker', co2:0.5, kg:0.5, off:['vegetable'], icon:'🥦'},
-    {id:'frukt', label:'Frukt', co2:0.6, kg:0.5, off:['fruit'], icon:'🍎'},
-    {id:'plante', label:'Plantebasert protein (bønner, tofu)', co2:2.5, kg:0.4, off:['legume','tofu','plant-based','bean'], icon:'🫘'},
-    {id:'annet', label:'Annet / ukjent', co2:2.5, kg:0.4, off:[], icon:'🛒'}
+    {id:'rodt_kjott', label:'Rødt kjøtt (biff, lam)', co2:40, kg:0.5, shelfDays:3, off:['beef','mutton','lamb','red-meat'], receiptWords:['biff','entrecote','indrefilet','kjøttdeig','karbonade','lam','oksekjøtt','oksefilet','ytrefilet'], icon:'🥩'},
+    {id:'svin', label:'Svin', co2:12, kg:0.5, shelfDays:3, off:['pork','ham'], receiptWords:['svin','bacon','skinke','ribbe','pinnekjøtt','koteletter'], icon:'🥓'},
+    {id:'fjorfe', label:'Fjørfe (kylling, kalkun)', co2:9, kg:0.5, shelfDays:2, off:['poultr','chicken','turkey'], receiptWords:['kylling','kyllfilet','kyllingfilet','kalkun'], icon:'🍗'},
+    {id:'fisk', label:'Fisk og sjømat', co2:6, kg:0.4, shelfDays:1, off:['fish','seafood','shrimp','salmon'], receiptWords:['laks','torsk','fisk','reker','sjømat','makrell','ørret'], icon:'🐟'},
+    {id:'ost', label:'Ost', co2:21, kg:0.25, shelfDays:14, off:['cheese'], receiptWords:['ost','norvegia','jarlsberg','gouda','brie'], icon:'🧀'},
+    {id:'meieri', label:'Melk og meieri', co2:3, kg:1, shelfDays:7, off:['milk','dairies','yogurt','cream'], receiptWords:['melk','yoghurt','yogurt','rømme','fløte','smør','kefir'], icon:'🥛'},
+    {id:'egg', label:'Egg', co2:4.5, kg:0.6, shelfDays:21, off:['egg'], receiptWords:['egg'], icon:'🥚'},
+    {id:'brod', label:'Brød og korn', co2:1.4, kg:0.5, shelfDays:4, off:['bread','cereal','pasta','rice','flour'], receiptWords:['brød','loff','rundstykke','knekkebrød','pasta','ris','mel','havregryn'], icon:'🍞'},
+    {id:'gronnsaker', label:'Grønnsaker', co2:0.5, kg:0.5, shelfDays:5, off:['vegetable'], receiptWords:['gulrot','løk','potet','paprika','agurk','tomat','salat','brokkoli','kål'], icon:'🥦'},
+    {id:'frukt', label:'Frukt', co2:0.6, kg:0.5, shelfDays:5, off:['fruit'], receiptWords:['eple','banan','appelsin','pære','druer','sitron','frukt'], icon:'🍎'},
+    {id:'plante', label:'Plantebasert protein (bønner, tofu)', co2:2.5, kg:0.4, shelfDays:5, off:['legume','tofu','plant-based','bean'], receiptWords:['tofu','bønner','linser','falafel','kikerter'], icon:'🫘'},
+    {id:'annet', label:'Annet / ukjent', co2:2.5, kg:0.4, shelfDays:5, off:[], receiptWords:[], icon:'🛒'}
   ];
   function catById(id){ return CATS.find(function(c){return c.id===id}) || CATS[CATS.length-1]; }
   function guessCategory(offCategoriesTags){
@@ -166,6 +253,21 @@
       var c = CATS[i];
       for(var j=0;j<c.off.length;j++){
         if(joined.indexOf(c.off[j]) !== -1) return c.id;
+      }
+    }
+    return 'annet';
+  }
+  // OCR på kvitteringer dropper eller feiltolker ofte æ/ø/å (f.eks. "brød" -> "brod"),
+  // så både kvitteringsteksten og nøkkelordene sammenlignes uten disse tegnene.
+  function foldNorwegian(s){
+    return s.toLowerCase().replace(/æ/g,'a').replace(/ø/g,'o').replace(/å/g,'a');
+  }
+  function guessCategoryFromReceiptText(text){
+    var folded = foldNorwegian(text);
+    for(var i=0;i<CATS.length;i++){
+      var c = CATS[i];
+      for(var j=0;j<c.receiptWords.length;j++){
+        if(folded.indexOf(foldNorwegian(c.receiptWords[j])) !== -1) return c.id;
       }
     }
     return 'annet';
@@ -182,10 +284,12 @@
   });
 
   // ---------- storage: db+user capability, falling back to localStorage ----------
+  // Parameterisert over samlingsnavn/lagringsnøkkel slik at både matskap-varer og
+  // handleliste (F3) kan bruke samme lagringsmønster uavhengig av hverandre.
   var storage = null;
+  var shoppingStorage = null;
 
-  function makeLocalBackend(){
-    var KEY = 'matskapet_items_v1';
+  function makeLocalBackend(KEY){
     function read(){
       try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e){ return []; }
     }
@@ -203,11 +307,12 @@
     };
   }
 
-  function makeDbBackend(db, uid){
-    var itemsCol = db.doc('data/users/' + uid + '/profile').collection('items');
+  function makeDbBackend(db, uid, colName, orderField){
+    var itemsCol = db.doc('data/users/' + uid + '/profile').collection(colName);
     return {
       subscribe: function(fn){
-        return itemsCol.orderBy('expiryDate','asc').onSnapshot(function(snap){
+        var q = orderField ? itemsCol.orderBy(orderField,'asc') : itemsCol;
+        return q.onSnapshot(function(snap){
           fn(snap.docs.map(function(d){ var data = d.data() || {}; data.id = d.id; return data; }));
         }, function(err){ console.warn('db onSnapshot error', err); });
       },
@@ -218,23 +323,23 @@
     };
   }
 
-  function initStorage(cb){
+  function initStorage(cb, localKey, dbColName, orderField){
     var settled = false;
-    function settle(s){ if(settled) return; settled = true; storage = s; cb(s); }
+    function settle(s){ if(settled) return; settled = true; cb(s); }
     // never block first paint: fall back if capabilities don't answer promptly
-    var fallbackTimer = setTimeout(function(){ settle(makeLocalBackend()); }, 4000);
+    var fallbackTimer = setTimeout(function(){ settle(makeLocalBackend(localKey)); }, 4000);
     (async function(){
       try{
-        if(!window.claude || !window.claude.use){ clearTimeout(fallbackTimer); settle(makeLocalBackend()); return; }
+        if(!window.claude || !window.claude.use){ clearTimeout(fallbackTimer); settle(makeLocalBackend(localKey)); return; }
         var db = await window.claude.use('db');
         var userCap = db ? await window.claude.use('user') : null;
         var uid = userCap ? await userCap.id() : null;
         clearTimeout(fallbackTimer);
-        if(db && uid){ settle(makeDbBackend(db, uid)); }
-        else{ settle(makeLocalBackend()); }
+        if(db && uid){ settle(makeDbBackend(db, uid, dbColName, orderField)); }
+        else{ settle(makeLocalBackend(localKey)); }
       } catch(e){
         clearTimeout(fallbackTimer);
-        settle(makeLocalBackend());
+        settle(makeLocalBackend(localKey));
       }
     })();
   }
@@ -243,6 +348,14 @@
   var listEl = document.getElementById('list');
   var emptyEl = document.getElementById('emptyState');
   var storageNote = document.getElementById('storageNote');
+
+  // yyyy-mm-dd i LOKAL tid — aldri toISOString() på en lokal dato, det konverterer
+  // til UTC og kan forskyve datoen en dag i norsk tidssone (UTC+1/+2).
+  function toDateStr(d){
+    var m = String(d.getMonth()+1); if(m.length<2) m = '0'+m;
+    var day = String(d.getDate()); if(day.length<2) day = '0'+day;
+    return d.getFullYear() + '-' + m + '-' + day;
+  }
 
   function daysLeft(dateStr){
     var today = new Date(); today.setHours(0,0,0,0);
@@ -326,6 +439,55 @@
       });
       listEl.appendChild(el);
     });
+  }
+
+  // ---------- shopping list rendering (F3) ----------
+  var currentShoppingItems = [];
+  var shoppingItemsEl = document.getElementById('shoppingItems');
+  var shoppingEmptyState = document.getElementById('shoppingEmptyState');
+
+  function renderShoppingList(items){
+    currentShoppingItems = items;
+    shoppingItemsEl.innerHTML = '';
+    shoppingEmptyState.hidden = items.length > 0;
+
+    // ikke-kjøpte varer øverst, kjøpte varer nederst (rekkefølge ellers som lagt til)
+    var sorted = items.slice().sort(function(a,b){ return (a.checked?1:0) - (b.checked?1:0); });
+
+    sorted.forEach(function(item){
+      var el = document.createElement('div');
+      el.className = 'shopping-item';
+      el.innerHTML =
+        '<label style="display:flex; align-items:center; gap:8px; flex:1">' +
+          '<input type="checkbox" data-role="bought">' +
+          '<span data-role="label" style="flex:1"></span>' +
+        '</label>' +
+        '<button data-role="remove" aria-label="Fjern">✕</button>';
+      var checkEl = el.querySelector('[data-role="bought"]');
+      var labelEl = el.querySelector('[data-role="label"]');
+      var removeEl = el.querySelector('[data-role="remove"]');
+      checkEl.checked = !!item.checked;
+      labelEl.textContent = (item.amount ? item.amount + ' ' : '') + item.name;
+      labelEl.style.textDecoration = item.checked ? 'line-through' : 'none';
+      checkEl.addEventListener('change', function(){ shoppingStorage.update(item.id, {checked: checkEl.checked}); });
+      removeEl.addEventListener('click', function(){ shoppingStorage.remove(item.id); });
+      shoppingItemsEl.appendChild(el);
+    });
+  }
+
+  // Kryssjekk mot det du allerede har i matskapet (F3-differensieringen fra PRD-en):
+  // en ingrediens regnes som "allerede har" hvis navnet overlapper med en aktiv
+  // matskap-vare — grov substreng-sammenligning, ikke eksakt matching.
+  function alreadyInMatskap(name){
+    var folded = foldNorwegian(name);
+    if(folded.length < 3) return false;
+    var active = currentItems.filter(function(i){ return i.status === 'active'; });
+    for(var i=0;i<active.length;i++){
+      var itemFolded = foldNorwegian(active[i].name);
+      if(itemFolded.length < 3) continue;
+      if(folded.indexOf(itemFolded) !== -1 || itemFolded.indexOf(folded) !== -1) return true;
+    }
+    return false;
   }
 
   var toastTimer = null;
@@ -490,6 +652,470 @@
   }
   lookupBtn.addEventListener('click', function(){ lookupBarcode(document.getElementById('barcodeInput').value.trim()); });
 
+  // ---------- receipt scanning (F2): client-side OCR via Tesseract.js, no backend ----------
+  // Kvitteringsbildet sendes aldri til noen server — Tesseract.js kjører i nettleseren
+  // (WebAssembly), og bildet forkastes så snart teksten er lest ut.
+  var receiptOverlay = document.getElementById('receiptOverlay');
+  var receiptBtn = document.getElementById('receiptBtn');
+  var closeReceiptSheet = document.getElementById('closeReceiptSheet');
+  var receiptFileInput = document.getElementById('receiptFileInput');
+  var receiptPickBtn = document.getElementById('receiptPickBtn');
+  var receiptPreviewWrap = document.getElementById('receiptPreviewWrap');
+  var receiptPreview = document.getElementById('receiptPreview');
+  var receiptOcrStatus = document.getElementById('receiptOcrStatus');
+  var receiptReviewArea = document.getElementById('receiptReviewArea');
+  var receiptLinesEl = document.getElementById('receiptLines');
+  var receiptEmptyHint = document.getElementById('receiptEmptyHint');
+  var receiptPurchaseDate = document.getElementById('receiptPurchaseDate');
+  var receiptSubmitBtn = document.getElementById('receiptSubmitBtn');
+  var receiptRows = []; // {name, categoryId, checked}
+
+  // Ord som vanligvis betyr at linjen IKKE er en varelinje (sum, betaling, butikkinfo m.m.)
+  var RECEIPT_SKIP_WORDS = ['sum','totalt','total','mva','kontant','bankaxept','betalt','rest','veksel',
+    'avrunding','pant','rabatt','medlem','kundenr','kortnr','org.nr','orgnr','kvittering','takk',
+    'åpningstid','kasse','terminal','referanse','ref:','moms','beløp','saldo','bonus','sparer',
+    'dato','kl.','tlf','kvantum','antall','www.','kvitteringsnr'];
+
+  function looksLikeJunkLine(lower){
+    for(var i=0;i<RECEIPT_SKIP_WORDS.length;i++){
+      if(lower.indexOf(RECEIPT_SKIP_WORDS[i]) !== -1) return true;
+    }
+    return false;
+  }
+
+  // Grov heuristikk, ikke garantert treffsikker: plukker linjer som ender på en pris
+  // (f.eks. "KYLLFILE 350G 79,90"), strimler bort strekkode-prefiks og MVA/sum-linjer.
+  function parseReceiptText(text){
+    var priceRe = /(\d{1,4}[.,]\d{2})\s*(?:kr)?\s*$/i;
+    var leadingCodeRe = /^\d{5,14}\s+/;
+    var leadingQtyRe = /^\d+\s*[xX]\s*/;
+    var rawLines = text.split('\n');
+    var out = [];
+    rawLines.forEach(function(raw){
+      var line = raw.trim();
+      if(line.length < 3) return;
+      var lower = line.toLowerCase();
+      if(looksLikeJunkLine(lower)) return;
+      var m = priceRe.exec(line);
+      if(!m) return;
+      var name = line.slice(0, m.index).trim();
+      name = name.replace(leadingCodeRe, '').trim();
+      name = name.replace(leadingQtyRe, '').trim();
+      name = name.replace(/\s{2,}/g, ' ');
+      if(name.length < 2) return;
+      if(/^[\d.,\s]+$/.test(name)) return; // bare tall igjen — trolig ikke en varelinje
+      var nice = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+      out.push({ name: nice, categoryId: guessCategoryFromReceiptText(name) });
+    });
+    return out;
+  }
+
+  function renderReceiptRows(){
+    receiptLinesEl.innerHTML = '';
+    receiptEmptyHint.hidden = receiptRows.length > 0;
+    receiptSubmitBtn.disabled = !receiptRows.some(function(r){ return r.checked; });
+    receiptRows.forEach(function(row){
+      var el = document.createElement('div');
+      el.className = 'receipt-row';
+      el.innerHTML =
+        '<label style="display:flex; align-items:center; gap:8px">' +
+          '<input type="checkbox" data-role="check">' +
+          '<input type="text" data-role="name" style="flex:1">' +
+        '</label>' +
+        '<select data-role="cat"></select>';
+      var checkEl = el.querySelector('[data-role="check"]');
+      var nameEl = el.querySelector('[data-role="name"]');
+      var catEl = el.querySelector('[data-role="cat"]');
+      CATS.forEach(function(c){
+        var o = document.createElement('option');
+        o.value = c.id; o.textContent = c.icon + ' ' + c.label;
+        catEl.appendChild(o);
+      });
+      checkEl.checked = row.checked;
+      nameEl.value = row.name;
+      catEl.value = row.categoryId;
+      checkEl.addEventListener('change', function(){
+        row.checked = checkEl.checked;
+        receiptSubmitBtn.disabled = !receiptRows.some(function(r){ return r.checked; });
+      });
+      nameEl.addEventListener('input', function(){ row.name = nameEl.value; });
+      catEl.addEventListener('change', function(){ row.categoryId = catEl.value; });
+      receiptLinesEl.appendChild(el);
+    });
+  }
+
+  function openReceiptSheet(){
+    receiptOverlay.hidden = false;
+    receiptPurchaseDate.valueAsDate = new Date();
+  }
+  function closeReceiptSheetFn(){
+    receiptOverlay.hidden = true;
+    receiptPreviewWrap.hidden = true;
+    receiptPreview.src = '';
+    receiptReviewArea.hidden = true;
+    receiptOcrStatus.textContent = '';
+    receiptFileInput.value = '';
+    receiptRows = [];
+  }
+  receiptBtn.addEventListener('click', openReceiptSheet);
+  closeReceiptSheet.addEventListener('click', closeReceiptSheetFn);
+  receiptOverlay.addEventListener('click', function(e){ if(e.target === receiptOverlay) closeReceiptSheetFn(); });
+  receiptPickBtn.addEventListener('click', function(){ receiptFileInput.click(); });
+
+  receiptFileInput.addEventListener('change', function(){
+    var file = receiptFileInput.files && receiptFileInput.files[0];
+    if(!file) return;
+    if(!window.Tesseract){
+      receiptOcrStatus.textContent = 'Kunne ikke laste tekstgjenkjenning (sjekk nettforbindelsen). Legg til varene manuelt i stedet.';
+      return;
+    }
+    var objectUrl = URL.createObjectURL(file);
+    receiptPreview.src = objectUrl;
+    receiptPreviewWrap.hidden = false;
+    receiptReviewArea.hidden = true;
+    receiptOcrStatus.textContent = 'Leser kvitteringen … 0 %';
+    Tesseract.recognize(file, 'nor', {
+      logger: function(m){
+        if(m.status === 'recognizing text' && typeof m.progress === 'number'){
+          receiptOcrStatus.textContent = 'Leser kvitteringen … ' + Math.round(m.progress * 100) + ' %';
+        }
+      }
+    }).then(function(result){
+      URL.revokeObjectURL(objectUrl);
+      var lines = parseReceiptText(result.data.text || '');
+      receiptRows = lines.map(function(l){ return {name:l.name, categoryId:l.categoryId, checked:true}; });
+      receiptOcrStatus.textContent = receiptRows.length
+        ? 'Fant ' + receiptRows.length + ' mulige varelinjer — sjekk gjennom under.'
+        : 'Fant ingen tydelige varelinjer.';
+      receiptReviewArea.hidden = false;
+      renderReceiptRows();
+    }).catch(function(err){
+      console.warn('OCR failed', err);
+      URL.revokeObjectURL(objectUrl);
+      receiptOcrStatus.textContent = 'Kunne ikke lese bildet. Prøv igjen, eller legg til varene manuelt.';
+    });
+  });
+
+  receiptSubmitBtn.addEventListener('click', function(){
+    var purchaseDate = receiptPurchaseDate.value ? new Date(receiptPurchaseDate.value + 'T00:00:00') : new Date();
+    var added = 0;
+    receiptRows.forEach(function(row){
+      if(!row.checked || !row.name.trim()) return;
+      var cat = catById(row.categoryId);
+      var expiry = new Date(purchaseDate.getTime());
+      expiry.setDate(expiry.getDate() + cat.shelfDays);
+      storage.add({
+        name: row.name.trim(),
+        categoryId: cat.id,
+        quantityKg: cat.kg,
+        expiryType: 'best_for',
+        expiryDate: toDateStr(expiry),
+        imageUrl: null,
+        barcode: null,
+        source: 'kvittering',
+        status: 'active',
+        addedAt: new Date().toISOString()
+      });
+      added++;
+    });
+    closeReceiptSheetFn();
+    if(added > 0) showToast(added + (added === 1 ? ' vare lagt til' : ' varer lagt til'));
+  });
+
+  // ---------- recipe photo -> handleliste (F3): samme klient-side OCR-motor som F2 ----------
+  var shoppingOverlay = document.getElementById('shoppingOverlay');
+  var shoppingBtn = document.getElementById('shoppingBtn');
+  var closeShoppingSheet = document.getElementById('closeShoppingSheet');
+  var shoppingAddForm = document.getElementById('shoppingAddForm');
+  var shoppingAddInput = document.getElementById('shoppingAddInput');
+  var recipeFileInput = document.getElementById('recipeFileInput');
+  var recipePickBtn = document.getElementById('recipePickBtn');
+  var recipePreviewWrap = document.getElementById('recipePreviewWrap');
+  var recipePreview = document.getElementById('recipePreview');
+  var recipeOcrStatus = document.getElementById('recipeOcrStatus');
+  var recipeReviewArea = document.getElementById('recipeReviewArea');
+  var recipeLinesEl = document.getElementById('recipeLines');
+  var recipeEmptyHint = document.getElementById('recipeEmptyHint');
+  var recipeSubmitBtn = document.getElementById('recipeSubmitBtn');
+  var recipeRows = []; // {name, amount, checked, alreadyHave}
+
+  // Vanlige norske måleenheter i oppskrifter — brukt til å skille mengde+enhet fra
+  // ingrediensnavnet i en linje som "2 dl melk".
+  var UNIT_WORDS = ['dl','l','ts','ss','g','gram','kg','stk','stykker','fedd','boks','bokser',
+    'pk','pakke','pakker','kopp','kopper','knivsodd','klype','msk'];
+
+  // Grov heuristikk: linjer som starter med et tall tolkes som mengde (+ evt. kjent
+  // enhet) + navn. Linjer uten tall først beholdes som hele navnet — bruker retter opp.
+  function parseIngredientLine(raw){
+    var line = raw.trim().replace(/\s{2,}/g, ' ');
+    if(!line) return null;
+    var tokens = line.split(' ');
+    var amountRe = /^\d+(?:[\/.,]\d+)?$/;
+    if(amountRe.test(tokens[0])){
+      var amount = tokens[0];
+      var rest = tokens.slice(1);
+      if(rest.length && UNIT_WORDS.indexOf(rest[0].toLowerCase().replace(/\.$/,'')) !== -1){
+        amount += ' ' + rest[0];
+        rest = rest.slice(1);
+      }
+      var name = rest.join(' ').trim();
+      if(!name) return null;
+      return { amount: amount, name: name };
+    }
+    return { amount: '', name: line };
+  }
+
+  // Ord som vanligvis betyr at linjen er en overskrift eller et fremgangsmåte-steg,
+  // ikke en ingredienslinje.
+  var RECIPE_SKIP_WORDS = ['ingredienser','fremgangsmate','tilbehor','servering','porsjoner',
+    'tilberedning','sett ovnen','oppskrift','ferdig','pynt med'];
+
+  function looksLikeInstructionLine(text){
+    var folded = foldNorwegian(text);
+    for(var i=0;i<RECIPE_SKIP_WORDS.length;i++){
+      if(folded.indexOf(RECIPE_SKIP_WORDS[i]) !== -1) return true;
+    }
+    return false;
+  }
+
+  function parseRecipeText(text){
+    var rawLines = text.split('\n');
+    var out = [];
+    rawLines.forEach(function(raw){
+      var line = raw.trim();
+      if(line.length < 2) return;
+      if(looksLikeInstructionLine(line)) return;
+      if(/^\d+\.\s/.test(line)) return; // nummerert fremgangsmåte-steg, f.eks. "1. Ha oljen i panna"
+      if(line.split(/\s+/).length > 7) return; // trolig en hel setning, ikke en ingredienslinje
+      var parsed = parseIngredientLine(line);
+      if(!parsed || !parsed.name || parsed.name.length < 2) return;
+      var nice = parsed.name.charAt(0).toUpperCase() + parsed.name.slice(1).toLowerCase();
+      out.push({ name: nice, amount: parsed.amount });
+    });
+    return out;
+  }
+
+  function renderRecipeRows(){
+    recipeLinesEl.innerHTML = '';
+    recipeEmptyHint.hidden = recipeRows.length > 0;
+    recipeSubmitBtn.disabled = !recipeRows.some(function(r){ return r.checked; });
+    recipeRows.forEach(function(row){
+      var el = document.createElement('div');
+      el.className = 'recipe-row';
+      el.innerHTML =
+        '<label style="display:flex; align-items:center; gap:8px">' +
+          '<input type="checkbox" data-role="check">' +
+          '<input type="text" data-role="amount" style="width:80px" placeholder="mengde">' +
+          '<input type="text" data-role="name" style="flex:1">' +
+        '</label>' +
+        (row.alreadyHave ? '<span class="hint">Ser ut som du har dette i matskapet</span>' : '');
+      var checkEl = el.querySelector('[data-role="check"]');
+      var amountEl = el.querySelector('[data-role="amount"]');
+      var nameEl = el.querySelector('[data-role="name"]');
+      checkEl.checked = row.checked;
+      amountEl.value = row.amount;
+      nameEl.value = row.name;
+      checkEl.addEventListener('change', function(){
+        row.checked = checkEl.checked;
+        recipeSubmitBtn.disabled = !recipeRows.some(function(r){ return r.checked; });
+      });
+      amountEl.addEventListener('input', function(){ row.amount = amountEl.value; });
+      nameEl.addEventListener('input', function(){ row.name = nameEl.value; });
+      recipeLinesEl.appendChild(el);
+    });
+  }
+
+  function resetRecipeCapture(){
+    recipePreviewWrap.hidden = true;
+    recipePreview.src = '';
+    recipeReviewArea.hidden = true;
+    recipeOcrStatus.textContent = '';
+    recipeFileInput.value = '';
+    recipeRows = [];
+  }
+
+  function openShoppingSheet(){ shoppingOverlay.hidden = false; }
+  function closeShoppingSheetFn(){
+    shoppingOverlay.hidden = true;
+    resetRecipeCapture();
+  }
+  shoppingBtn.addEventListener('click', openShoppingSheet);
+  closeShoppingSheet.addEventListener('click', closeShoppingSheetFn);
+  shoppingOverlay.addEventListener('click', function(e){ if(e.target === shoppingOverlay) closeShoppingSheetFn(); });
+  recipePickBtn.addEventListener('click', function(){ recipeFileInput.click(); });
+
+  shoppingAddForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = shoppingAddInput.value.trim();
+    if(!name) return;
+    shoppingStorage.add({ name:name, amount:'', checked:false, source:'manuell', addedAt:new Date().toISOString() });
+    shoppingAddInput.value = '';
+  });
+
+  recipeFileInput.addEventListener('change', function(){
+    var file = recipeFileInput.files && recipeFileInput.files[0];
+    if(!file) return;
+    if(!window.Tesseract){
+      recipeOcrStatus.textContent = 'Kunne ikke laste tekstgjenkjenning (sjekk nettforbindelsen). Legg til ingrediensene manuelt i stedet.';
+      return;
+    }
+    var objectUrl = URL.createObjectURL(file);
+    recipePreview.src = objectUrl;
+    recipePreviewWrap.hidden = false;
+    recipeReviewArea.hidden = true;
+    recipeOcrStatus.textContent = 'Leser oppskriften … 0 %';
+    Tesseract.recognize(file, 'nor', {
+      logger: function(m){
+        if(m.status === 'recognizing text' && typeof m.progress === 'number'){
+          recipeOcrStatus.textContent = 'Leser oppskriften … ' + Math.round(m.progress * 100) + ' %';
+        }
+      }
+    }).then(function(result){
+      URL.revokeObjectURL(objectUrl);
+      var lines = parseRecipeText(result.data.text || '');
+      recipeRows = lines.map(function(l){
+        var already = alreadyInMatskap(l.name);
+        return { name:l.name, amount:l.amount, checked: !already, alreadyHave: already };
+      });
+      recipeOcrStatus.textContent = recipeRows.length
+        ? 'Fant ' + recipeRows.length + ' mulige ingredienser — sjekk gjennom under.'
+        : 'Fant ingen tydelige ingredienslinjer.';
+      recipeReviewArea.hidden = false;
+      renderRecipeRows();
+    }).catch(function(err){
+      console.warn('OCR failed', err);
+      URL.revokeObjectURL(objectUrl);
+      recipeOcrStatus.textContent = 'Kunne ikke lese bildet. Prøv igjen, eller legg til ingrediensene manuelt.';
+    });
+  });
+
+  recipeSubmitBtn.addEventListener('click', function(){
+    var added = 0;
+    recipeRows.forEach(function(row){
+      if(!row.checked || !row.name.trim()) return;
+      shoppingStorage.add({
+        name: row.name.trim(),
+        amount: row.amount.trim(),
+        checked: false,
+        source: 'oppskrift',
+        addedAt: new Date().toISOString()
+      });
+      added++;
+    });
+    resetRecipeCapture();
+    if(added > 0) showToast(added + (added === 1 ? ' ingrediens lagt til i handlelisten' : ' ingredienser lagt til i handlelisten'));
+  });
+
+  // ---------- curated recipe bank (F4) ----------
+  // Lite, kuratert, håndplukket utvalg — bevisst ikke en skalerbar redaksjonspipeline
+  // eller en åpen/brukergenerert oppskriftsplattform, per PRD-ens avgrensning.
+  var RECIPES = [
+    { id:'r1', title:'Pasta carbonara', emoji:'🍝', blurb:'Rask hverdagspasta med bacon og egg.', ingredients:[
+      {amount:'400 g', name:'Spaghetti'}, {amount:'150 g', name:'Bacon'}, {amount:'3', name:'Egg'},
+      {amount:'1 dl', name:'Parmesan'}, {amount:'2 fedd', name:'Hvitløk'}
+    ]},
+    { id:'r2', title:'Kremet kyllinggryte', emoji:'🍗', blurb:'Kyllinggryte med fløte og grønnsaker.', ingredients:[
+      {amount:'500 g', name:'Kyllingfilet'}, {amount:'3 dl', name:'Fløte'}, {amount:'1', name:'Løk'},
+      {amount:'2', name:'Paprika'}, {amount:'2 ss', name:'Karripulver'}
+    ]},
+    { id:'r3', title:'Ovnsbakt laks', emoji:'🐟', blurb:'Laks i ovn med sitron og poteter.', ingredients:[
+      {amount:'600 g', name:'Laksefilet'}, {amount:'800 g', name:'Poteter'}, {amount:'1', name:'Sitron'},
+      {amount:'2 ss', name:'Olivenolje'}, {amount:'', name:'Dill'}
+    ]},
+    { id:'r4', title:'Vegetarisk chili', emoji:'🫘', blurb:'Fyldig chili med bønner og mais.', ingredients:[
+      {amount:'2 bokser', name:'Hermetiske tomater'}, {amount:'1 boks', name:'Kidneybønner'}, {amount:'1 boks', name:'Mais'},
+      {amount:'1', name:'Løk'}, {amount:'2 ts', name:'Chilipulver'}
+    ]},
+    { id:'r5', title:'Fiskesuppe', emoji:'🍲', blurb:'Norsk klassiker med fisk og grønnsaker.', ingredients:[
+      {amount:'500 g', name:'Fiskefilet'}, {amount:'2 dl', name:'Fløte'}, {amount:'3', name:'Gulrot'},
+      {amount:'2', name:'Potet'}, {amount:'1 l', name:'Fiskekraft'}
+    ]},
+    { id:'r6', title:'Taco', emoji:'🌮', blurb:'Fredagstaco med kjøttdeig og tilbehør.', ingredients:[
+      {amount:'500 g', name:'Kjøttdeig'}, {amount:'1 pose', name:'Tacokrydder'}, {amount:'1 pk', name:'Tortillalefser'},
+      {amount:'1', name:'Salathode'}, {amount:'2', name:'Tomat'}
+    ]},
+    { id:'r7', title:'Grønnsakwok', emoji:'🥦', blurb:'Rask wok med nudler og sesonggrønnsaker.', ingredients:[
+      {amount:'250 g', name:'Nudler'}, {amount:'1', name:'Brokkoli'}, {amount:'2', name:'Gulrot'},
+      {amount:'3 ss', name:'Soyasaus'}, {amount:'2 fedd', name:'Hvitløk'}
+    ]},
+    { id:'r8', title:'Ostesuppe', emoji:'🧀', blurb:'Varmende suppe til kalde dager.', ingredients:[
+      {amount:'300 g', name:'Ost'}, {amount:'5 dl', name:'Melk'}, {amount:'3', name:'Potet'},
+      {amount:'1', name:'Purre'}, {amount:'2 ss', name:'Hvetemel'}
+    ]},
+    { id:'r9', title:'Eggerøre med rundstykker', emoji:'🥚', blurb:'Enkel frokost eller kveldsmat.', ingredients:[
+      {amount:'6', name:'Egg'}, {amount:'1 dl', name:'Melk'}, {amount:'4', name:'Rundstykker'}, {amount:'', name:'Smør'}
+    ]},
+    { id:'r10', title:'Fruktsalat', emoji:'🍎', blurb:'Frisk dessert av sesongfrukt.', ingredients:[
+      {amount:'2', name:'Eple'}, {amount:'2', name:'Banan'}, {amount:'1', name:'Appelsin'}, {amount:'1 never', name:'Druer'}
+    ]}
+  ];
+
+  // Slår sammen ingredienser fra flere valgte oppskrifter til én liste. Samme
+  // ingrediens fra flere oppskrifter vises én gang, med mengdene fra hver satt
+  // sammen (ikke summert — ulike enheter kan ikke trygt legges sammen automatisk).
+  function mergeRecipeIngredients(recipeIds){
+    var byKey = {};
+    var order = [];
+    recipeIds.forEach(function(id){
+      var recipe = RECIPES.find(function(r){ return r.id === id; });
+      if(!recipe) return;
+      recipe.ingredients.forEach(function(ing){
+        var key = foldNorwegian(ing.name);
+        if(!byKey[key]){ byKey[key] = { name: ing.name, amounts: [] }; order.push(key); }
+        if(ing.amount) byKey[key].amounts.push(ing.amount);
+      });
+    });
+    return order.map(function(key){
+      var entry = byKey[key];
+      return { name: entry.name, amount: entry.amounts.join(' + ') };
+    });
+  }
+
+  var recipeBankOverlay = document.getElementById('recipeBankOverlay');
+  var recipeBankBtn = document.getElementById('recipeBankBtn');
+  var closeRecipeBankSheet = document.getElementById('closeRecipeBankSheet');
+  var recipeBankList = document.getElementById('recipeBankList');
+  var recipeBankUseBtn = document.getElementById('recipeBankUseBtn');
+
+  RECIPES.forEach(function(r){
+    var el = document.createElement('div');
+    el.className = 'recipe-card';
+    el.innerHTML =
+      '<label style="display:flex; align-items:flex-start; gap:8px; margin-top:10px">' +
+        '<input type="checkbox" data-role="pick" data-id="' + r.id + '">' +
+        '<span><strong>' + r.emoji + ' ' + r.title + '</strong><br><span class="hint">' + r.blurb + '</span></span>' +
+      '</label>';
+    recipeBankList.appendChild(el);
+  });
+
+  function openRecipeBankSheet(){ recipeBankOverlay.hidden = false; }
+  function closeRecipeBankSheetFn(){
+    recipeBankOverlay.hidden = true;
+    recipeBankList.querySelectorAll('[data-role="pick"]').forEach(function(cb){ cb.checked = false; });
+  }
+  recipeBankBtn.addEventListener('click', openRecipeBankSheet);
+  closeRecipeBankSheet.addEventListener('click', closeRecipeBankSheetFn);
+  recipeBankOverlay.addEventListener('click', function(e){ if(e.target === recipeBankOverlay) closeRecipeBankSheetFn(); });
+
+  recipeBankUseBtn.addEventListener('click', function(){
+    var pickedIds = Array.from(recipeBankList.querySelectorAll('[data-role="pick"]:checked')).map(function(cb){ return cb.getAttribute('data-id'); });
+    if(!pickedIds.length) return;
+    var merged = mergeRecipeIngredients(pickedIds);
+    // gjenbruker gjennomgangs-UI-en fra F3 (recipeRows/recipeReviewArea/recipeSubmitBtn)
+    recipeRows = merged.map(function(m){
+      var already = alreadyInMatskap(m.name);
+      return { name: m.name, amount: m.amount, checked: !already, alreadyHave: already };
+    });
+    closeRecipeBankSheetFn();
+    openShoppingSheet();
+    recipePreviewWrap.hidden = true;
+    recipeOcrStatus.textContent = merged.length
+      ? 'Hentet ' + merged.length + ' ingredienser fra ' + pickedIds.length + (pickedIds.length === 1 ? ' oppskrift' : ' oppskrifter') + ' — sjekk gjennom under.'
+      : '';
+    recipeReviewArea.hidden = false;
+    renderRecipeRows();
+  });
+
   // ---------- submit ----------
   itemForm.addEventListener('submit', function(e){
     e.preventDefault();
@@ -512,13 +1138,19 @@
 
   // ---------- boot ----------
   initStorage(function(s){
+    storage = s;
     if(s.mode === 'local'){
       storageNote.textContent = 'Data lagres kun i denne nettleseren på denne enheten (prototype-lagring).';
     } else {
       storageNote.textContent = 'Data lagres privat for deg og følger deg mellom økter.';
     }
     s.subscribe(render);
-  });
+  }, 'matskapet_items_v1', 'items', 'expiryDate');
+
+  initStorage(function(s){
+    shoppingStorage = s;
+    s.subscribe(renderShoppingList);
+  }, 'matskapet_shopping_v1', 'shopping', 'addedAt');
 })();
 </script>
 </body>
