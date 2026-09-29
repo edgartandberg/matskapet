@@ -44,19 +44,20 @@
 
   header{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:18px; }
   .brand{ display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
-  .mark{ font-size:26px; width:44px; height:44px; flex-shrink:0; border-radius:50%;
+  .mark{ width:44px; height:44px; flex-shrink:0; border-radius:50%; color:var(--green-dark);
     background:var(--green-soft); display:flex; align-items:center; justify-content:center; }
   h1{ font-family:'Gochi Hand',cursive; font-size:28px; margin:0; line-height:1.1; }
   .brand p{ margin:2px 0 0; font-size:12px; color:var(--text-muted); }
 
   header button{
-    border:none; background:var(--surface); box-shadow:var(--shadow);
+    border:none; background:var(--surface); box-shadow:var(--shadow); color:var(--text);
     width:40px; height:40px; border-radius:50%; font-size:17px; cursor:pointer; flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
     transition:transform .12s ease, background .12s ease;
   }
   header button:hover{ background:var(--green-soft); }
   header button:active{ transform:scale(.94); }
+  header button svg{ display:block; }
   #addBtn{ background:var(--green); color:#fff; font-size:22px; font-weight:600; }
   #addBtn:hover{ background:var(--green-dark); }
 
@@ -76,7 +77,8 @@
   }
   .item .thumb{
     width:44px; height:44px; border-radius:50%; flex-shrink:0; overflow:hidden;
-    background:var(--u-soft, var(--green-soft)); display:flex; align-items:center; justify-content:center; font-size:22px;
+    background:var(--u-soft, var(--green-soft)); display:flex; align-items:center; justify-content:center;
+    font-size:16px; font-weight:700; color:var(--green-dark);
   }
   .item .thumb img{ width:100%; height:100%; object-fit:cover; }
   .item .body{ flex:1; min-width:0; }
@@ -91,25 +93,64 @@
   .item .actions button:hover{ filter:brightness(.97); }
 
   .empty{ text-align:center; padding:40px 20px; color:var(--text-muted); }
-  .empty .ic{ font-size:38px; margin-bottom:8px; }
+  .empty .ic{ color:var(--text-muted); margin-bottom:8px; display:flex; justify-content:center; }
   .empty h2{ font-family:'Gochi Hand',cursive; font-size:22px; margin:0 0 6px; color:var(--text); }
   .empty p{ margin:0; font-size:14px; }
 
   .footnote{ font-size:12px; color:var(--text-muted); margin-top:22px; line-height:1.5; }
 
   /* ---- ark / dialoger ---- */
-  #overlay, #receiptOverlay, #shoppingOverlay, #recipeBankOverlay{
+  #overlay, #receiptOverlay, #shoppingOverlay{
     position:fixed; inset:0; background:rgba(30,32,28,.35);
     display:flex; align-items:flex-end; justify-content:center; z-index:50;
   }
-  #sheet, #receiptSheet, #shoppingSheet, #recipeBankSheet{
+  #sheet, #receiptSheet, #shoppingSheet{
     background:var(--surface); width:100%; max-width:480px; max-height:88vh; overflow-y:auto;
     border-radius:24px 24px 0 0; padding:20px 18px 24px; box-shadow:0 -8px 30px rgba(0,0,0,.15);
   }
   @media (min-width:560px){
-    #overlay, #receiptOverlay, #shoppingOverlay, #recipeBankOverlay{ align-items:center; }
-    #sheet, #receiptSheet, #shoppingSheet, #recipeBankSheet{ border-radius:24px; max-height:85vh; }
+    #overlay, #receiptOverlay, #shoppingOverlay{ align-items:center; }
+    #sheet, #receiptSheet, #shoppingSheet{ border-radius:24px; max-height:85vh; }
   }
+
+  /* ---- oppskriftsside (egen side, ikke popup) ---- */
+  #recipesPage{ max-width:640px; margin:0 auto; padding:20px 16px 90px; }
+  .page-head{ display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .back-btn{
+    border:none; background:var(--surface); box-shadow:var(--shadow);
+    width:40px; height:40px; border-radius:50%; cursor:pointer; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; color:var(--text);
+  }
+  .back-btn:hover{ background:var(--green-soft); }
+  #recipesPage .section-lbl{ margin:0; }
+  #recipesPage .hint{ margin:6px 0 18px; }
+
+  .recipe-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:14px; }
+  .recipe-card{
+    background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow);
+    overflow:hidden; cursor:pointer; border:2px solid transparent; text-align:left;
+    padding:0; font:inherit; color:var(--text); display:block;
+  }
+  .recipe-card.selected{ border-color:var(--green); }
+  .recipe-card-img{
+    position:relative; aspect-ratio:4/3; background:var(--green-soft);
+    display:flex; align-items:center; justify-content:center; color:var(--green-dark);
+  }
+  .recipe-card-img img{ width:100%; height:100%; object-fit:cover; }
+  .recipe-card-img .placeholder-label{
+    position:absolute; bottom:6px; left:8px; right:8px; font-size:10px; color:var(--green-dark); opacity:.75;
+  }
+  .recipe-card-check{
+    position:absolute; top:8px; right:8px; width:24px; height:24px; border-radius:50%;
+    background:rgba(255,255,255,.9); display:flex; align-items:center; justify-content:center;
+    color:var(--green-dark); opacity:0; transform:scale(.7); transition:opacity .12s ease, transform .12s ease;
+  }
+  .recipe-card.selected .recipe-card-check{ opacity:1; transform:scale(1); background:var(--green); color:#fff; }
+  .recipe-card-body{ padding:10px 12px 12px; }
+  .recipe-card-body strong{ display:block; font-size:14px; margin-bottom:3px; }
+  .recipe-card-body .hint{ display:block; }
+
+  #recipeGridUseBtn{ margin-top:18px; width:100%; }
 
   .sheet-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
   .sheet-head h2{ font-family:'Gochi Hand',cursive; font-size:24px; margin:0; }
@@ -129,6 +170,7 @@
     background:var(--surface); color:var(--text); width:100%;
   }
   input:focus, select:focus, textarea:focus{ outline:none; border-color:var(--green); box-shadow:0 0 0 3px var(--green-soft); }
+  textarea{ min-height:90px; resize:vertical; }
   input[type="checkbox"]{ width:18px; height:18px; accent-color:var(--green); flex-shrink:0; }
   input[type="radio"]{ width:16px; height:16px; accent-color:var(--green); }
 
@@ -145,7 +187,7 @@
   .hint{ font-size:12px; color:var(--text-muted); display:block; }
 
   .lookup-result{ display:flex; gap:10px; align-items:center; background:var(--green-soft); border-radius:14px; padding:10px 12px; margin:10px 0; }
-  .lookup-result .thumb{ width:36px; height:36px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:var(--surface); }
+  .lookup-result .thumb{ width:36px; height:36px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:var(--surface); font-weight:700; color:var(--green-dark); }
   .lookup-result .thumb img{ width:100%; height:100%; object-fit:cover; }
 
   #scanArea{ position:relative; background:var(--grey-soft); border-radius:16px; overflow:hidden; min-height:220px; display:flex; align-items:center; justify-content:center; text-align:center; padding:14px; }
@@ -154,7 +196,7 @@
   .scan-msg{ color:var(--text-muted); font-size:13px; }
 
   /* kvittering-, oppskrift- og handleliste-rader */
-  .receipt-row, .recipe-row, .shopping-item, .recipe-card{
+  .receipt-row, .recipe-row, .shopping-item{
     background:var(--grey-soft); border-radius:14px; padding:10px 12px; margin-top:8px;
     display:flex; align-items:center; gap:10px; flex-wrap:wrap;
   }
@@ -177,15 +219,23 @@
 <div id="shell">
   <header>
     <div class="brand">
-      <div class="mark">🥫</div>
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l2-4h14l2 4"/><path d="M3 9h18v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
+      </div>
       <div>
         <h1>Matskapet</h1>
         <p>Skann · registrer · reduser svinn</p>
       </div>
     </div>
-    <button id="receiptBtn" aria-label="Skann kvittering">🧾</button>
-    <button id="shoppingBtn" aria-label="Handleliste">📋</button>
-    <button id="recipeBankBtn" aria-label="Oppskrifter">🍳</button>
+    <button id="receiptBtn" aria-label="Skann kvittering">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v17l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3V3z"/><line x1="8.5" y1="7.5" x2="15.5" y2="7.5"/><line x1="8.5" y1="11" x2="15.5" y2="11"/><line x1="8.5" y1="14.5" x2="12.5" y2="14.5"/></svg>
+    </button>
+    <button id="shoppingBtn" aria-label="Handleliste">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="4" height="4" rx="1"/><path d="M5 7l1 1 2-2"/><line x1="11" y1="7" x2="20" y2="7"/><rect x="4" y="15" width="4" height="4" rx="1"/><line x1="11" y1="17" x2="20" y2="17"/></svg>
+    </button>
+    <button id="recipeBankBtn" aria-label="Oppskrifter">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+    </button>
     <button id="addBtn" aria-label="Legg til vare">+</button>
   </header>
 
@@ -212,7 +262,9 @@
     <div class="section-lbl" id="listLabel">Ditt matskap</div>
     <div class="list" id="list" style="margin-top:8px"></div>
     <div class="empty" id="emptyState" hidden>
-      <div class="ic">🥕</div>
+      <div class="ic" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l2-4h14l2 4"/><path d="M3 9h18v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
+      </div>
       <h2>Tomt så langt</h2>
       <p>Trykk på + og legg til den første varen — skann strekkoden eller skriv den inn manuelt.</p>
     </div>
@@ -256,7 +308,7 @@
 
     <div id="lookupResultWrap" hidden>
       <div class="lookup-result">
-        <div class="thumb" id="resultThumb">🛒</div>
+        <div class="thumb" id="resultThumb"></div>
         <div>
           <div class="hint">Funnet i Open Food Facts</div>
           <strong id="resultName"></strong>
@@ -358,25 +410,30 @@
     </div>
     <div id="recipeOcrStatus" style="margin-top:8px"></div>
 
+    <div class="section-lbl" style="margin-top:16px">Lim inn oppskrift</div>
+    <p class="hint">Appen kan ikke lese en Instagram- eller YouTube-video direkte — det finnes ikke noe gratis API for det. Lim i stedet inn bildeteksten/beskrivelsen med oppskriften (f.eks. kopiert fra en Reel eller en Shorts-video), så finner vi ingredienslinjene for deg.</p>
+    <textarea id="pasteRecipeInput" placeholder="Lim inn oppskriftstekst her …"></textarea>
+    <button class="btn-secondary" id="pasteRecipeBtn" style="width:100%; margin-top:8px">Tolk tekst</button>
+
     <div id="recipeReviewArea" hidden>
       <div class="section-lbl" style="margin-top:12px">Fant disse ingrediensene</div>
       <div id="recipeLines"></div>
-      <div id="recipeEmptyHint" class="hint" hidden>Fant ingen tydelige ingredienslinjer. Prøv et skarpere bilde av selve ingredienslisten.</div>
+      <div id="recipeEmptyHint" class="hint" hidden>Fant ingen tydelige ingredienslinjer. Prøv et skarpere bilde av selve ingredienslisten, eller en annen tekst.</div>
       <button class="btn-primary" id="recipeSubmitBtn" style="margin-top:14px; width:100%">Legg til i handlelisten</button>
     </div>
   </div>
 </div>
 
-<div id="recipeBankOverlay" hidden>
-  <div id="recipeBankSheet" role="dialog" aria-modal="true" aria-labelledby="recipeBankSheetTitle">
-    <div class="sheet-head">
-      <h2 id="recipeBankSheetTitle">Oppskrifter</h2>
-      <button id="closeRecipeBankSheet" aria-label="Lukk">✕</button>
-    </div>
-    <p class="hint">Et lite, kuratert utvalg oppskrifter — hak av det du vil lage denne uken, så samler vi ingrediensene i én handleliste (kryssjekket mot det du allerede har i matskapet).</p>
-    <div id="recipeBankList"></div>
-    <button class="btn-primary" id="recipeBankUseBtn" style="margin-top:14px; width:100%">Legg ingredienser i handlelisten</button>
+<div id="recipesPage" hidden>
+  <div class="page-head">
+    <button class="back-btn" id="recipesBackBtn" aria-label="Tilbake til matskapet">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="section-lbl">Oppskrifter</div>
   </div>
+  <p class="hint">Et lite, kuratert utvalg oppskrifter — hak av det du vil lage denne uken, så samler vi ingrediensene i én handleliste (kryssjekket mot det du allerede har i matskapet).</p>
+  <div id="recipeGrid" class="recipe-grid"></div>
+  <button class="btn-primary" id="recipeGridUseBtn" disabled>Legg ingredienser i handlelisten</button>
 </div>
 
 <div id="toast" hidden>
@@ -396,19 +453,24 @@
   // brukt til å gjette kategori for kvitterings-OCR (egen liste fra "off", som er
   // Open Food Facts sine engelske kategori-tags).
   var CATS = [
-    {id:'rodt_kjott', label:'Rødt kjøtt (biff, lam)', co2:40, kg:0.5, shelfDays:3, off:['beef','mutton','lamb','red-meat'], receiptWords:['biff','entrecote','indrefilet','kjøttdeig','karbonade','lam','oksekjøtt','oksefilet','ytrefilet'], icon:'🥩'},
-    {id:'svin', label:'Svin', co2:12, kg:0.5, shelfDays:3, off:['pork','ham'], receiptWords:['svin','bacon','skinke','ribbe','pinnekjøtt','koteletter'], icon:'🥓'},
-    {id:'fjorfe', label:'Fjørfe (kylling, kalkun)', co2:9, kg:0.5, shelfDays:2, off:['poultr','chicken','turkey'], receiptWords:['kylling','kyllfilet','kyllingfilet','kalkun'], icon:'🍗'},
-    {id:'fisk', label:'Fisk og sjømat', co2:6, kg:0.4, shelfDays:1, off:['fish','seafood','shrimp','salmon'], receiptWords:['laks','torsk','fisk','reker','sjømat','makrell','ørret'], icon:'🐟'},
-    {id:'ost', label:'Ost', co2:21, kg:0.25, shelfDays:14, off:['cheese'], receiptWords:['ost','norvegia','jarlsberg','gouda','brie'], icon:'🧀'},
-    {id:'meieri', label:'Melk og meieri', co2:3, kg:1, shelfDays:7, off:['milk','dairies','yogurt','cream'], receiptWords:['melk','yoghurt','yogurt','rømme','fløte','smør','kefir'], icon:'🥛'},
-    {id:'egg', label:'Egg', co2:4.5, kg:0.6, shelfDays:21, off:['egg'], receiptWords:['egg'], icon:'🥚'},
-    {id:'brod', label:'Brød og korn', co2:1.4, kg:0.5, shelfDays:4, off:['bread','cereal','pasta','rice','flour'], receiptWords:['brød','loff','rundstykke','knekkebrød','pasta','ris','mel','havregryn'], icon:'🍞'},
-    {id:'gronnsaker', label:'Grønnsaker', co2:0.5, kg:0.5, shelfDays:5, off:['vegetable'], receiptWords:['gulrot','løk','potet','paprika','agurk','tomat','salat','brokkoli','kål'], icon:'🥦'},
-    {id:'frukt', label:'Frukt', co2:0.6, kg:0.5, shelfDays:5, off:['fruit'], receiptWords:['eple','banan','appelsin','pære','druer','sitron','frukt'], icon:'🍎'},
-    {id:'plante', label:'Plantebasert protein (bønner, tofu)', co2:2.5, kg:0.4, shelfDays:5, off:['legume','tofu','plant-based','bean'], receiptWords:['tofu','bønner','linser','falafel','kikerter'], icon:'🫘'},
-    {id:'annet', label:'Annet / ukjent', co2:2.5, kg:0.4, shelfDays:5, off:[], receiptWords:[], icon:'🛒'}
+    {id:'rodt_kjott', label:'Rødt kjøtt (biff, lam)', co2:40, kg:0.5, shelfDays:3, off:['beef','mutton','lamb','red-meat'], receiptWords:['biff','entrecote','indrefilet','kjøttdeig','karbonade','lam','oksekjøtt','oksefilet','ytrefilet']},
+    {id:'svin', label:'Svin', co2:12, kg:0.5, shelfDays:3, off:['pork','ham'], receiptWords:['svin','bacon','skinke','ribbe','pinnekjøtt','koteletter']},
+    {id:'fjorfe', label:'Fjørfe (kylling, kalkun)', co2:9, kg:0.5, shelfDays:2, off:['poultr','chicken','turkey'], receiptWords:['kylling','kyllfilet','kyllingfilet','kalkun']},
+    {id:'fisk', label:'Fisk og sjømat', co2:6, kg:0.4, shelfDays:1, off:['fish','seafood','shrimp','salmon'], receiptWords:['laks','torsk','fisk','reker','sjømat','makrell','ørret']},
+    {id:'ost', label:'Ost', co2:21, kg:0.25, shelfDays:14, off:['cheese'], receiptWords:['ost','norvegia','jarlsberg','gouda','brie']},
+    {id:'meieri', label:'Melk og meieri', co2:3, kg:1, shelfDays:7, off:['milk','dairies','yogurt','cream'], receiptWords:['melk','yoghurt','yogurt','rømme','fløte','smør','kefir']},
+    {id:'egg', label:'Egg', co2:4.5, kg:0.6, shelfDays:21, off:['egg'], receiptWords:['egg']},
+    {id:'brod', label:'Brød og korn', co2:1.4, kg:0.5, shelfDays:4, off:['bread','cereal','pasta','rice','flour'], receiptWords:['brød','loff','rundstykke','knekkebrød','pasta','ris','mel','havregryn']},
+    {id:'gronnsaker', label:'Grønnsaker', co2:0.5, kg:0.5, shelfDays:5, off:['vegetable'], receiptWords:['gulrot','løk','potet','paprika','agurk','tomat','salat','brokkoli','kål']},
+    {id:'frukt', label:'Frukt', co2:0.6, kg:0.5, shelfDays:5, off:['fruit'], receiptWords:['eple','banan','appelsin','pære','druer','sitron','frukt']},
+    {id:'plante', label:'Plantebasert protein (bønner, tofu)', co2:2.5, kg:0.4, shelfDays:5, off:['legume','tofu','plant-based','bean'], receiptWords:['tofu','bønner','linser','falafel','kikerter']},
+    {id:'annet', label:'Annet / ukjent', co2:2.5, kg:0.4, shelfDays:5, off:[], receiptWords:[]}
   ];
+  // Første bokstav i navnet, brukt som nøytral monogram-miniatyr i stedet for emoji-ikoner.
+  function initial(name){
+    var s = (name || '').trim();
+    return s ? s.charAt(0).toUpperCase() : '?';
+  }
   function catById(id){ return CATS.find(function(c){return c.id===id}) || CATS[CATS.length-1]; }
   function guessCategory(offCategoriesTags){
     if(!offCategoriesTags || !offCategoriesTags.length) return 'annet';
@@ -440,7 +502,7 @@
   var catSelect = document.getElementById('categorySelect');
   CATS.forEach(function(c){
     var o = document.createElement('option');
-    o.value = c.id; o.textContent = c.icon + ' ' + c.label;
+    o.value = c.id; o.textContent = c.label;
     catSelect.appendChild(o);
   });
   catSelect.addEventListener('change', function(){
@@ -581,7 +643,7 @@
 
       var thumbHtml = item.imageUrl
         ? '<img src="' + item.imageUrl + '" alt="">'
-        : cat.icon;
+        : initial(item.name);
 
       el.innerHTML =
         '<div class="thumb">' + thumbHtml + '</div>' +
@@ -802,7 +864,7 @@
           document.getElementById('qtyInput').value = catById(guessed).kg;
           document.getElementById('resultName').textContent = lookedUpProduct.name;
           var thumb = document.getElementById('resultThumb');
-          thumb.innerHTML = lookedUpProduct.imageUrl ? '<img src="' + lookedUpProduct.imageUrl + '" alt="">' : '🛒';
+          thumb.innerHTML = lookedUpProduct.imageUrl ? '<img src="' + lookedUpProduct.imageUrl + '" alt="">' : initial(lookedUpProduct.name);
           lookupResultWrap.hidden = false;
           lookupHint.textContent = '';
         } else {
@@ -892,7 +954,7 @@
       var catEl = el.querySelector('[data-role="cat"]');
       CATS.forEach(function(c){
         var o = document.createElement('option');
-        o.value = c.id; o.textContent = c.icon + ' ' + c.label;
+        o.value = c.id; o.textContent = c.label;
         catEl.appendChild(o);
       });
       checkEl.checked = row.checked;
@@ -1050,6 +1112,7 @@
       if(line.length < 2) return;
       if(looksLikeInstructionLine(line)) return;
       if(/^\d+\.\s/.test(line)) return; // nummerert fremgangsmåte-steg, f.eks. "1. Ha oljen i panna"
+      if(/^[#@]/.test(line)) return; // hashtags/emneknagger og @-nevninger fra Instagram/YouTube-bildetekster
       if(line.split(/\s+/).length > 7) return; // trolig en hel setning, ikke en ingredienslinje
       var parsed = parseIngredientLine(line);
       if(!parsed || !parsed.name || parsed.name.length < 2) return;
@@ -1170,46 +1233,72 @@
     if(added > 0) showToast(added + (added === 1 ? ' ingrediens lagt til i handlelisten' : ' ingredienser lagt til i handlelisten'));
   });
 
+  // ---------- lim inn oppskriftstekst (fallback for video-lenker) ----------
+  // Verken Instagram eller YouTube tilbyr et gratis API for å hente transkripsjon/
+  // bildetekst fra en video-URL i ren nettleser-JS. Løsningen her er å la bruker
+  // lime inn teksten selv (f.eks. kopiert fra en Reel/Shorts-bildetekst) og
+  // gjenbruke samme tekst-tolking som brukes for oppskriftsfoto.
+  var pasteRecipeInput = document.getElementById('pasteRecipeInput');
+  var pasteRecipeBtn = document.getElementById('pasteRecipeBtn');
+  pasteRecipeBtn.addEventListener('click', function(){
+    var text = pasteRecipeInput.value;
+    if(!text.trim()) return;
+    var lines = parseRecipeText(text);
+    recipeRows = lines.map(function(l){
+      var already = alreadyInMatskap(l.name);
+      return { name:l.name, amount:l.amount, checked: !already, alreadyHave: already };
+    });
+    recipePreviewWrap.hidden = true;
+    recipeOcrStatus.textContent = recipeRows.length
+      ? 'Fant ' + recipeRows.length + ' mulige ingredienser — sjekk gjennom under.'
+      : 'Fant ingen tydelige ingredienslinjer i teksten.';
+    recipeReviewArea.hidden = false;
+    renderRecipeRows();
+    pasteRecipeInput.value = '';
+  });
+
   // ---------- curated recipe bank (F4) ----------
   // Lite, kuratert, håndplukket utvalg — bevisst ikke en skalerbar redaksjonspipeline
   // eller en åpen/brukergenerert oppskriftsplattform, per PRD-ens avgrensning.
+  // image: null inntil bilder legges til — rendres da som en nøytral plassholder.
+  // Sett f.eks. image:'bilder/pasta-carbonara.jpg' for å bytte inn et ekte bilde senere.
   var RECIPES = [
-    { id:'r1', title:'Pasta carbonara', emoji:'🍝', blurb:'Rask hverdagspasta med bacon og egg.', ingredients:[
+    { id:'r1', title:'Pasta carbonara', image:null, blurb:'Rask hverdagspasta med bacon og egg.', ingredients:[
       {amount:'400 g', name:'Spaghetti'}, {amount:'150 g', name:'Bacon'}, {amount:'3', name:'Egg'},
       {amount:'1 dl', name:'Parmesan'}, {amount:'2 fedd', name:'Hvitløk'}
     ]},
-    { id:'r2', title:'Kremet kyllinggryte', emoji:'🍗', blurb:'Kyllinggryte med fløte og grønnsaker.', ingredients:[
+    { id:'r2', title:'Kremet kyllinggryte', image:null, blurb:'Kyllinggryte med fløte og grønnsaker.', ingredients:[
       {amount:'500 g', name:'Kyllingfilet'}, {amount:'3 dl', name:'Fløte'}, {amount:'1', name:'Løk'},
       {amount:'2', name:'Paprika'}, {amount:'2 ss', name:'Karripulver'}
     ]},
-    { id:'r3', title:'Ovnsbakt laks', emoji:'🐟', blurb:'Laks i ovn med sitron og poteter.', ingredients:[
+    { id:'r3', title:'Ovnsbakt laks', image:null, blurb:'Laks i ovn med sitron og poteter.', ingredients:[
       {amount:'600 g', name:'Laksefilet'}, {amount:'800 g', name:'Poteter'}, {amount:'1', name:'Sitron'},
       {amount:'2 ss', name:'Olivenolje'}, {amount:'', name:'Dill'}
     ]},
-    { id:'r4', title:'Vegetarisk chili', emoji:'🫘', blurb:'Fyldig chili med bønner og mais.', ingredients:[
+    { id:'r4', title:'Vegetarisk chili', image:null, blurb:'Fyldig chili med bønner og mais.', ingredients:[
       {amount:'2 bokser', name:'Hermetiske tomater'}, {amount:'1 boks', name:'Kidneybønner'}, {amount:'1 boks', name:'Mais'},
       {amount:'1', name:'Løk'}, {amount:'2 ts', name:'Chilipulver'}
     ]},
-    { id:'r5', title:'Fiskesuppe', emoji:'🍲', blurb:'Norsk klassiker med fisk og grønnsaker.', ingredients:[
+    { id:'r5', title:'Fiskesuppe', image:null, blurb:'Norsk klassiker med fisk og grønnsaker.', ingredients:[
       {amount:'500 g', name:'Fiskefilet'}, {amount:'2 dl', name:'Fløte'}, {amount:'3', name:'Gulrot'},
       {amount:'2', name:'Potet'}, {amount:'1 l', name:'Fiskekraft'}
     ]},
-    { id:'r6', title:'Taco', emoji:'🌮', blurb:'Fredagstaco med kjøttdeig og tilbehør.', ingredients:[
+    { id:'r6', title:'Taco', image:null, blurb:'Fredagstaco med kjøttdeig og tilbehør.', ingredients:[
       {amount:'500 g', name:'Kjøttdeig'}, {amount:'1 pose', name:'Tacokrydder'}, {amount:'1 pk', name:'Tortillalefser'},
       {amount:'1', name:'Salathode'}, {amount:'2', name:'Tomat'}
     ]},
-    { id:'r7', title:'Grønnsakwok', emoji:'🥦', blurb:'Rask wok med nudler og sesonggrønnsaker.', ingredients:[
+    { id:'r7', title:'Grønnsakwok', image:null, blurb:'Rask wok med nudler og sesonggrønnsaker.', ingredients:[
       {amount:'250 g', name:'Nudler'}, {amount:'1', name:'Brokkoli'}, {amount:'2', name:'Gulrot'},
       {amount:'3 ss', name:'Soyasaus'}, {amount:'2 fedd', name:'Hvitløk'}
     ]},
-    { id:'r8', title:'Ostesuppe', emoji:'🧀', blurb:'Varmende suppe til kalde dager.', ingredients:[
+    { id:'r8', title:'Ostesuppe', image:null, blurb:'Varmende suppe til kalde dager.', ingredients:[
       {amount:'300 g', name:'Ost'}, {amount:'5 dl', name:'Melk'}, {amount:'3', name:'Potet'},
       {amount:'1', name:'Purre'}, {amount:'2 ss', name:'Hvetemel'}
     ]},
-    { id:'r9', title:'Eggerøre med rundstykker', emoji:'🥚', blurb:'Enkel frokost eller kveldsmat.', ingredients:[
+    { id:'r9', title:'Eggerøre med rundstykker', image:null, blurb:'Enkel frokost eller kveldsmat.', ingredients:[
       {amount:'6', name:'Egg'}, {amount:'1 dl', name:'Melk'}, {amount:'4', name:'Rundstykker'}, {amount:'', name:'Smør'}
     ]},
-    { id:'r10', title:'Fruktsalat', emoji:'🍎', blurb:'Frisk dessert av sesongfrukt.', ingredients:[
+    { id:'r10', title:'Fruktsalat', image:null, blurb:'Frisk dessert av sesongfrukt.', ingredients:[
       {amount:'2', name:'Eple'}, {amount:'2', name:'Banan'}, {amount:'1', name:'Appelsin'}, {amount:'1 never', name:'Druer'}
     ]}
   ];
@@ -1235,34 +1324,61 @@
     });
   }
 
-  var recipeBankOverlay = document.getElementById('recipeBankOverlay');
+  // Oppskrifter vises på en egen side (ikke som popup) — matskapet og
+  // oppskriftssiden er to fulle "sider" i samme dokument, byttet med showPage().
+  var shell = document.getElementById('shell');
+  var recipesPage = document.getElementById('recipesPage');
   var recipeBankBtn = document.getElementById('recipeBankBtn');
-  var closeRecipeBankSheet = document.getElementById('closeRecipeBankSheet');
-  var recipeBankList = document.getElementById('recipeBankList');
-  var recipeBankUseBtn = document.getElementById('recipeBankUseBtn');
+  var recipesBackBtn = document.getElementById('recipesBackBtn');
+  var recipeGridEl = document.getElementById('recipeGrid');
+  var recipeGridUseBtn = document.getElementById('recipeGridUseBtn');
+  var selectedRecipeIds = {};
 
-  RECIPES.forEach(function(r){
-    var el = document.createElement('div');
-    el.className = 'recipe-card';
-    el.innerHTML =
-      '<label style="display:flex; align-items:flex-start; gap:8px; margin-top:10px">' +
-        '<input type="checkbox" data-role="pick" data-id="' + r.id + '">' +
-        '<span><strong>' + r.emoji + '&nbsp; ' + r.title + '</strong><br><span class="hint">' + r.blurb + '</span></span>' +
-      '</label>';
-    recipeBankList.appendChild(el);
-  });
+  var PLACEHOLDER_IMG_SVG = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5.5-5.5a2 2 0 0 0-2.8 0L4 19"/></svg>';
+  var CHECK_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-9"/></svg>';
 
-  function openRecipeBankSheet(){ recipeBankOverlay.hidden = false; }
-  function closeRecipeBankSheetFn(){
-    recipeBankOverlay.hidden = true;
-    recipeBankList.querySelectorAll('[data-role="pick"]').forEach(function(cb){ cb.checked = false; });
+  function showPage(which){
+    shell.hidden = which !== 'home';
+    recipesPage.hidden = which !== 'recipes';
+    if(which === 'recipes') window.scrollTo(0, 0);
   }
-  recipeBankBtn.addEventListener('click', openRecipeBankSheet);
-  closeRecipeBankSheet.addEventListener('click', closeRecipeBankSheetFn);
-  recipeBankOverlay.addEventListener('click', function(e){ if(e.target === recipeBankOverlay) closeRecipeBankSheetFn(); });
 
-  recipeBankUseBtn.addEventListener('click', function(){
-    var pickedIds = Array.from(recipeBankList.querySelectorAll('[data-role="pick"]:checked')).map(function(cb){ return cb.getAttribute('data-id'); });
+  function renderRecipeGrid(){
+    recipeGridEl.innerHTML = '';
+    RECIPES.forEach(function(r){
+      var picked = !!selectedRecipeIds[r.id];
+      var el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'recipe-card' + (picked ? ' selected' : '');
+      el.setAttribute('aria-pressed', picked ? 'true' : 'false');
+      // image: null -> nøytral plassholder (bilde kan legges inn senere via RECIPES-dataene)
+      var imgHtml = r.image
+        ? '<img src="' + r.image + '" alt="">'
+        : PLACEHOLDER_IMG_SVG + '<span class="placeholder-label">Bilde kommer</span>';
+      el.innerHTML =
+        '<div class="recipe-card-img">' + imgHtml + '<span class="recipe-card-check">' + CHECK_SVG + '</span></div>' +
+        '<div class="recipe-card-body"><strong></strong><span class="hint"></span></div>';
+      el.querySelector('.recipe-card-body strong').textContent = r.title;
+      el.querySelector('.recipe-card-body .hint').textContent = r.blurb;
+      el.addEventListener('click', function(){
+        selectedRecipeIds[r.id] = !selectedRecipeIds[r.id];
+        renderRecipeGrid();
+      });
+      recipeGridEl.appendChild(el);
+    });
+    var count = Object.keys(selectedRecipeIds).filter(function(id){ return selectedRecipeIds[id]; }).length;
+    recipeGridUseBtn.disabled = count === 0;
+    recipeGridUseBtn.textContent = count > 0
+      ? 'Legg ingredienser i handlelisten (' + count + ')'
+      : 'Legg ingredienser i handlelisten';
+  }
+  renderRecipeGrid();
+
+  recipeBankBtn.addEventListener('click', function(){ showPage('recipes'); });
+  recipesBackBtn.addEventListener('click', function(){ showPage('home'); });
+
+  recipeGridUseBtn.addEventListener('click', function(){
+    var pickedIds = Object.keys(selectedRecipeIds).filter(function(id){ return selectedRecipeIds[id]; });
     if(!pickedIds.length) return;
     var merged = mergeRecipeIngredients(pickedIds);
     // gjenbruker gjennomgangs-UI-en fra F3 (recipeRows/recipeReviewArea/recipeSubmitBtn)
@@ -1270,7 +1386,9 @@
       var already = alreadyInMatskap(m.name);
       return { name: m.name, amount: m.amount, checked: !already, alreadyHave: already };
     });
-    closeRecipeBankSheetFn();
+    selectedRecipeIds = {};
+    renderRecipeGrid();
+    showPage('home');
     openShoppingSheet();
     recipePreviewWrap.hidden = true;
     recipeOcrStatus.textContent = merged.length
